@@ -1,7 +1,3 @@
-/**
- * AeroJukebox — Sinematik Web Audio Sonifikasyon Motoru
- * C Lydian (Temiz), D Dorian (Orta) ve A Minor Tritone (Kirli) ambient katmanları.
- */
 (() => {
   'use strict';
 
@@ -37,7 +33,6 @@
       this.padFilter.type = 'lowpass';
       this.padFilter.frequency.value = 1200;
 
-      // 4 Sesli Sinematik Pad Akoru
       const freqs = [130.81, 196.0, 246.94, 329.63];
       freqs.forEach((f, idx) => {
         const osc = this.ctx.createOscillator();
@@ -51,7 +46,6 @@
         this.padOscs.push({ osc, gain: g });
       });
 
-      // Analog Sub-Bass
       this.subOsc = this.ctx.createOscillator();
       this.subOsc.type = 'sine';
       this.subOsc.frequency.value = 65.41;
@@ -61,7 +55,6 @@
       this.subGain.connect(this.masterGain);
       this.subOsc.start();
 
-      // Atmosferik Pembe Gürültü (Rüzgar)
       const bufSize = this.ctx.sampleRate * 2;
       const pinkBuf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
       const data = pinkBuf.getChannelData(0);
@@ -86,18 +79,17 @@
       this.windGain.connect(this.masterGain);
       windSrc.start();
 
-      // Kirli Hava PM2.5 Parazit & Geiger Çıtırtısı
       const crackleBuf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
       const cData = crackleBuf.getChannelData(0);
       for (let i = 0; i < bufSize; i++) {
-        cData[i] = Math.random() > 0.98 ? (Math.random() * 2 - 1) * 0.7 : 0;
+        cData[i] = Math.random() > 0.97 ? (Math.random() * 2 - 1) * 0.8 : 0;
       }
       const crackleSrc = this.ctx.createBufferSource();
       crackleSrc.buffer = crackleBuf;
       crackleSrc.loop = true;
       const crackleFilter = this.ctx.createBiquadFilter();
       crackleFilter.type = 'highpass';
-      crackleFilter.frequency.value = 1800;
+      crackleFilter.frequency.value = 1600;
       this.crackleGain = this.ctx.createGain();
       this.crackleGain.gain.value = 0;
       crackleSrc.connect(crackleFilter);
@@ -109,16 +101,19 @@
       this.masterGain.connect(this.analyser);
       this.analyser.connect(this.ctx.destination);
 
-      // Kristal Doğa Çanları
       this.chimeTimer = setInterval(() => {
         if (!this.isPlaying) return;
-        if (this.currentStage === 'good' && Math.random() < 0.5) {
-          const pentatonic = [523.25, 659.25, 783.99, 987.77, 1046.50];
-          this.playCrystalNote(pentatonic[Math.floor(Math.random() * pentatonic.length)], 1.8, 0.06);
-        } else if (this.currentStage === 'hazardous' && Math.random() < 0.6) {
-          this.playCrystalNote(140 + Math.random() * 200, 0.05, 0.04, 'sawtooth');
+        if (this.currentMode === 'fire') {
+          if (this.currentFireRisk >= 50 && Math.random() < 0.7) {
+            this.playCrystalNote(180 + Math.random() * 260, 0.08, 0.07, 'sawtooth');
+          }
+        } else {
+          if (this.currentStage === 'stage1' && Math.random() < 0.6) {
+            const notes = [523.25, 659.25, 783.99, 987.77, 1046.50];
+            this.playCrystalNote(notes[Math.floor(Math.random() * notes.length)], 1.8, 0.06);
+          }
         }
-      }, 1600);
+      }, 1500);
 
       this.isInitialized = true;
     }
@@ -139,48 +134,83 @@
       osc.stop(now + decay + 0.05);
     }
 
-    updateSonification(metrics, stage, isMuted, volume) {
+    updateSonification(mode, metrics, stage, fireRisk, isMuted, volume) {
+      this.currentMode = mode;
       this.currentStage = stage;
+      this.currentFireRisk = fireRisk;
       if (!this.isInitialized || !this.isPlaying) return;
+
       const now = this.ctx.currentTime;
+      this.masterGain.gain.setTargetAtTime(isMuted ? 0 : volume, now, 0.1);
+
+      // YANGIN MODU SES MOTORU
+      if (mode === 'fire') {
+        if (fireRisk >= 50) {
+          const fireChord = [98.0, 146.83, 174.61, 220.0];
+          this.padOscs.forEach((v, i) => v.osc.frequency.setTargetAtTime(fireChord[i], now, 0.3));
+          this.subOsc.frequency.setTargetAtTime(49.0, now, 0.3);
+          this.padFilter.frequency.setTargetAtTime(650, now, 0.3);
+          this.windGain.gain.setTargetAtTime(0.14, now, 0.2);
+          this.crackleGain.gain.setTargetAtTime(0.25, now, 0.2);
+        } else {
+          const dryChord = [130.81, 164.81, 196.0, 246.94];
+          this.padOscs.forEach((v, i) => v.osc.frequency.setTargetAtTime(dryChord[i], now, 0.4));
+          this.subOsc.frequency.setTargetAtTime(65.41, now, 0.4);
+          this.padFilter.frequency.setTargetAtTime(1000, now, 0.4);
+          this.windGain.gain.setTargetAtTime(0.06, now, 0.2);
+          this.crackleGain.gain.setTargetAtTime(0.01, now, 0.2);
+        }
+        return;
+      }
+
+      // HAVA MODU SES MOTORU (5 EVRE)
       const aqi = metrics.aqi;
       const pm25 = metrics.pm25;
 
-      this.masterGain.gain.setTargetAtTime(isMuted ? 0 : volume, now, 0.1);
-
-      if (aqi <= 50) {
-        // C Lydian Maj9
+      if (stage === 'stage1') {
+        const chord = [130.81, 164.81, 196.0, 246.94];
+        this.padOscs.forEach((v, i) => v.osc.frequency.setTargetAtTime(chord[i], now, 0.4));
+        this.subOsc.frequency.setTargetAtTime(65.41, now, 0.4);
+        this.padFilter.frequency.setTargetAtTime(1600, now, 0.4);
+        this.windGain.gain.setTargetAtTime(0.03, now, 0.3);
+        this.crackleGain.gain.setTargetAtTime(0, now, 0.2);
+      } else if (stage === 'stage2') {
         const chord = [130.81, 196.0, 246.94, 293.66];
         this.padOscs.forEach((v, i) => v.osc.frequency.setTargetAtTime(chord[i], now, 0.4));
         this.subOsc.frequency.setTargetAtTime(65.41, now, 0.4);
-        this.padFilter.frequency.setTargetAtTime(1400, now, 0.4);
-        this.windGain.gain.setTargetAtTime(0.04, now, 0.3);
+        this.padFilter.frequency.setTargetAtTime(1300, now, 0.4);
+        this.windGain.gain.setTargetAtTime(0.05, now, 0.3);
         this.crackleGain.gain.setTargetAtTime(0, now, 0.2);
-      } else if (aqi <= 150) {
-        // D Dorian Sus4
-        const chord = [146.83, 196.0, 220.0, 293.66];
+      } else if (stage === 'stage3') {
+        const chord = [146.83, 196.0, 220.0, 261.63];
         this.padOscs.forEach((v, i) => v.osc.frequency.setTargetAtTime(chord[i], now, 0.4));
         this.subOsc.frequency.setTargetAtTime(73.42, now, 0.4);
-        this.padFilter.frequency.setTargetAtTime(800, now, 0.4);
+        this.padFilter.frequency.setTargetAtTime(950, now, 0.4);
         this.windGain.gain.setTargetAtTime(0.08, now, 0.3);
         this.crackleGain.gain.setTargetAtTime(0.02, now, 0.2);
+      } else if (stage === 'stage4') {
+        const chord = [164.81, 196.0, 246.94, 293.66];
+        this.padOscs.forEach((v, i) => v.osc.frequency.setTargetAtTime(chord[i], now, 0.4));
+        this.subOsc.frequency.setTargetAtTime(82.41, now, 0.4);
+        this.padFilter.frequency.setTargetAtTime(650, now, 0.4);
+        this.windGain.gain.setTargetAtTime(0.11, now, 0.3);
+        this.crackleGain.gain.setTargetAtTime(0.05, now, 0.2);
       } else {
-        // A Minor + Tritone Gerilimi
         const chord = [110.0, 155.56, 164.81, 220.0];
         this.padOscs.forEach((v, i) => v.osc.frequency.setTargetAtTime(chord[i], now, 0.4));
         this.subOsc.frequency.setTargetAtTime(55.0, now, 0.4);
         this.padFilter.frequency.setTargetAtTime(420, now, 0.4);
-        this.windGain.gain.setTargetAtTime(0.12, now, 0.3);
-        const crackleLvl = Math.min(0.25, Math.max(0.05, pm25 / 180));
+        this.windGain.gain.setTargetAtTime(0.14, now, 0.3);
+        const crackleLvl = Math.min(0.25, Math.max(0.06, pm25 / 180));
         this.crackleGain.gain.setTargetAtTime(crackleLvl, now, 0.2);
       }
     }
 
-    async start(volume, metrics, stage, isMuted) {
+    async start(volume, mode, metrics, stage, fireRisk, isMuted) {
       this.init(volume);
       if (this.ctx.state === 'suspended') await this.ctx.resume();
       this.isPlaying = true;
-      this.updateSonification(metrics, stage, isMuted, volume);
+      this.updateSonification(mode, metrics, stage, fireRisk, isMuted, volume);
     }
 
     stop() {
