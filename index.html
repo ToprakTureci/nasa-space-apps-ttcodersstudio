@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AeroJukebox | NASA Space Apps Challenge 2026 - Earth Information Telemetry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header" role="banner">
+      <div class="header-left">
+        <div class="brand-lockup">
+          <svg class="brand-logo" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <circle cx="20" cy="20" r="18" stroke="#1E2D45" stroke-width="1.5" />
+            <circle cx="20" cy="20" r="13" stroke="#0B3D91" stroke-width="1.5" stroke-dasharray="4 3" />
+            <circle cx="20" cy="20" r="7" fill="#0B3D91" fill-opacity="0.35" stroke="#00D2FF" stroke-width="1.5" />
+            <path d="M9 20H13L15.5 14L19 26L22.5 11L25.5 23L28 20H31" stroke="#00D2FF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <div class="brand-text">
+            <span class="brand-title">AeroJukebox</span>
+            <span class="brand-subtitle">ATMOSPHERIC SONIFICATION TELEMETRY</span>
+          </div>
+        </div>
+
+        <div class="nasa-badge" title="NASA Space Apps Challenge 2026">
+          <svg class="nasa-badge-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.5" stroke="#00D2FF" stroke-width="1.4" />
+            <ellipse cx="12" cy="12" rx="11" ry="4.2" transform="rotate(-25 12 12)" stroke="#FFFFFF" stroke-width="1.2" />
+            <circle cx="12" cy="12" r="2.2" fill="#00D2FF" />
+          </svg>
+          <span>NASA Space Apps Challenge 2026</span>
+        </div>
+      </div>
+
+      <nav class="header-nav" role="tablist" aria-label="Ana Görünüm Seçimi">
+        <button id="tabMonitor" class="nav-tab active" role="tab" aria-selected="true" aria-controls="monitorView">
+          <span class="live-indicator" aria-hidden="true"></span>
+          Canlı Dünya Monitörü
+        </button>
+        <button id="tabTeam" class="nav-tab" role="tab" aria-selected="false" aria-controls="teamView">
+          Emeği Geçenler / Proje Ekibi
+        </button>
+      </nav>
+
+      <div class="header-right">
+        <button id="voiceToggleBtn" class="voice-toggle" type="button" aria-pressed="false" title="Sesli Rehber (Kısayol: V)">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 11.995C17.0039 13.3208 16.4774 14.5924 15.54 15.53" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M19.07 4.93C20.9447 6.80528 21.9979 9.34836 21.9979 12C21.9979 14.6516 20.9447 17.1947 19.07 19.07" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Sesli Okuma: <strong id="voiceToggleState">Kapalı</strong></span>
+        </button>
+
+        <a href="#" class="external-team-btn" target="_blank" rel="noopener noreferrer">
+          <span>NASA Space Apps Takım Sayfası</span>
+          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M18 13V19C18 20.1046 17.1046 21 16 21H5C3.89543 21 3 20.1046 3 19V8C3 6.89543 3.89543 6 5 6H11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M15 3H21V9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M10 14L21 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <section id="monitorView" class="telemetry-workspace" role="tabpanel" aria-labelledby="tabMonitor">
+        <section class="panel map-panel" aria-label="İnteraktif Küresel Hava Kalitesi Haritası">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="telemetry-tag">GEO-SPATIAL TELEMETRY</span>
+              <h2 class="panel-title">Küresel Atmosfer Radarı</h2>
+            </div>
+            <div class="map-hud-coords" id="mapCoordReadout">37.7765° N, 29.0864° E</div>
+          </div>
+
+          <div class="map-viewport-wrapper">
+            <div id="worldMap" class="world-map" aria-label="Dünya Haritası - Koordinat seçmek için tıklayın"></div>
+
+            <div class="map-overlay-hint">
+              <span class="pulse-dot"></span>
+              <span>Anlık uydu telemetrisi için haritada herhangi bir noktaya tıklayın</span>
+            </div>
+
+            <div class="custom-zoom-controls" aria-label="Harita Yakınlaştırma Kontrolleri">
+              <button id="zoomInBtn" class="map-ctrl-btn" type="button" title="Yakınlaştır" aria-label="Haritayı yakınlaştır">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+              <button id="zoomOutBtn" class="map-ctrl-btn" type="button" title="Uzaklaştır" aria-label="Haritayı uzaklaştır">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+              <button id="resetMapBtn" class="map-ctrl-btn" type="button" title="Küresel Görünüme Dön" aria-label="Harita görünümünü sıfırla">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/><path d="M4 12H20M12 4C14.5 6.8 14.5 17.2 12 20M12 4C9.5 6.8 9.5 17.2 12 20" stroke="currentColor" stroke-width="1.4"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="map-footer-controls">
+            <div class="timeline-module">
+              <div class="timeline-header">
+                <div class="timeline-labels">
+                  <span class="telemetry-tag">TARİHSEL KARŞILAŞTIRMA SİMÜLATÖRÜ</span>
+                  <span id="timelineModeLabel" class="timeline-mode">Güncel Uydu Verisi (2026)</span>
+                </div>
+                <div class="timeline-badges">
+                  <span id="timelineDeltaBadge" class="timeline-delta hidden"></span>
+                  <span id="timelineYearBadge" class="year-badge">2026</span>
+                </div>
+              </div>
+              <div class="timeline-slider-row">
+                <span class="era-anchor">1750 Sanayi Öncesi</span>
+                <input id="timelineSlider" class="telemetry-slider" type="range" min="1750" max="2026" step="1" value="2026" aria-label="Tarihsel Atmosfer Karşılaştırma Yılı" />
+                <span class="era-anchor">2026 Güncel</span>
+              </div>
+              <div class="timeline-ticks" aria-hidden="true">
+                <button type="button" class="era-tick" data-year="1750">1750</button>
+                <button type="button" class="era-tick" data-year="1880">1880</button>
+                <button type="button" class="era-tick" data-year="1950">1950</button>
+                <button type="button" class="era-tick" data-year="1995">1995</button>
+                <button type="button" class="era-tick active" data-year="2026">2026</button>
+              </div>
+            </div>
+
+            <div class="station-presets" aria-label="Hazır Gözlem İstasyonları">
+              <span class="presets-label">REFERANS İSTASYONLAR</span>
+              <div class="presets-row">
+                <button type="button" class="preset-btn" data-station="reykjavik">İzlanda - Reykjavik</button>
+                <button type="button" class="preset-btn" data-station="amazon">Amazon Havzası</button>
+                <button type="button" class="preset-btn active" data-station="denizli">Denizli - Türkiye</button>
+                <button type="button" class="preset-btn" data-station="tokyo">Tokyo - Japonya</button>
+                <button type="button" class="preset-btn" data-station="delhi">Yeni Delhi - Hindistan</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel biosphere-panel" aria-label="Dinamik Ekosistem ve Telemetri Verileri" aria-live="polite">
+          <div class="location-telemetry-header">
+            <div class="location-meta">
+              <div class="source-row">
+                <span id="dataSourceBadge" class="source-badge">SENKRONİZE EDİLİYOR...</span>
+                <span id="locationRegion" class="region-tag">GÖZLEM İSTASYONU</span>
+              </div>
+              <h1 id="locationName" class="location-title">Denizli, Türkiye</h1>
+              <div id="locationCoords" class="location-coords">37.7765° N, 29.0864° E</div>
+            </div>
+
+            <div class="aqi-readout-card" id="aqiCard">
+              <div class="aqi-top-label">HAVA KALİTESİ (AQI)</div>
+              <div class="aqi-main-row">
+                <span id="aqiValue" class="aqi-number">--</span>
+                <span id="aqiCategory" class="aqi-status">ANALİZ</span>
+              </div>
+              <div class="aqi-scale-bar">
+                <div id="aqiMeterFill" class="aqi-meter-fill"></div>
+              </div>
+              <div id="aqiSubMetric" class="aqi-submetric">EAQI: --</div>
+            </div>
+          </div>
+
+          <div id="biosphereStage" class="biosphere-stage stage-good">
+            <div class="biosphere-hud-overlay">
+              <span id="biosphereStageLabel" class="biosphere-badge">EVRE 1 // DENGELİ BİYOSFER</span>
+              <span id="biosphereStageDesc" class="biosphere-desc">Yüksek oksijen döngüsü • Berrak atmosfer</span>
+            </div>
+
+            <svg id="biosphereSvg" class="biosphere-svg" viewBox="0 0 420 320" fill="none" aria-label="Dinamik Biyosfer Ağacı Görselleştirmesi">
+              <defs>
+                <radialGradient id="atmosGlowGood" cx="50%" cy="42%" r="55%">
+                  <stop offset="0%" stop-color="#10B981" stop-opacity="0.22" />
+                  <stop offset="55%" stop-color="#00D2FF" stop-opacity="0.06" />
+                  <stop offset="100%" stop-color="#060B14" stop-opacity="0" />
+                </radialGradient>
+                <radialGradient id="atmosGlowMod" cx="50%" cy="42%" r="55%">
+                  <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.22" />
+                  <stop offset="65%" stop-color="#78350F" stop-opacity="0.08" />
+                  <stop offset="100%" stop-color="#060B14" stop-opacity="0" />
+                </radialGradient>
+                <radialGradient id="atmosGlowHaz" cx="50%" cy="42%" r="58%">
+                  <stop offset="0%" stop-color="#EF4444" stop-opacity="0.22" />
+                  <stop offset="60%" stop-color="#374151" stop-opacity="0.18" />
+                  <stop offset="100%" stop-color="#060B14" stop-opacity="0" />
+                </radialGradient>
+                <linearGradient id="trunkGrad" x1="210" y1="140" x2="210" y2="285" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#5C4033" />
+                  <stop offset="100%" stop-color="#2D1E17" />
+                </linearGradient>
+                <linearGradient id="trunkHazGrad" x1="210" y1="140" x2="210" y2="285" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#4B5563" />
+                  <stop offset="100%" stop-color="#1F2937" />
+                </linearGradient>
+                <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+
+              <rect class="atmos-bg-good" x="0" y="0" width="420" height="320" fill="url(#atmosGlowGood)" />
+              <rect class="atmos-bg-mod" x="0" y="0" width="420" height="320" fill="url(#atmosGlowMod)" />
+              <rect class="atmos-bg-haz" x="0" y="0" width="420" height="320" fill="url(#atmosGlowHaz)" />
+
+              <g class="reticle-grid" opacity="0.35">
+                <circle cx="210" cy="155" r="118" stroke="#1E2D45" stroke-width="1" stroke-dasharray="3 5" />
+                <circle cx="210" cy="155" r="85" stroke="#1E2D45" stroke-width="0.8" />
+                <line x1="65" y1="155" x2="88" y2="155" stroke="#00D2FF" stroke-width="1" stroke-opacity="0.45" />
+                <line x1="332" y1="155" x2="355" y2="155" stroke="#00D2FF" stroke-width="1" stroke-opacity="0.45" />
+                <line x1="210" y1="24" x2="210" y2="42" stroke="#00D2FF" stroke-width="1" stroke-opacity="0.45" />
+              </g>
+
+              <path d="M55 282C115 268 305 268 365 282" stroke="#1E2D45" stroke-width="1.5" />
+              <path d="M90 288C150 278 270 278 330 288" stroke="#00D2FF" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="2 4" />
+
+              <g class="tree-skeleton">
+                <path class="tree-roots" d="M182 280C194 275 198 268 201 255M238 280C226 275 222 268 219 255M195 284C202 276 206 272 208 263M225 284C218 276 214 272 212 263" stroke="#3E2B22" stroke-width="3.5" stroke-linecap="round" />
+
+                <path class="tree-trunk" d="M201 276C203 245 204 215 202 185C201 168 197 156 188 142L196 138C204 152 208 164 210 176C213 162 218 148 228 134L235 138C225 154 220 168 219 186C217 216 218 246 221 276Z" fill="url(#trunkGrad)" />
+
+                <path class="tree-branches" d="M203 185C184 170 165 162 142 152M166 163C158 148 150 138 137 128M155 158C141 158 128 164 116 169M216 182C236 166 258 158 282 148M255 159C265 144 274 132 287 123M267 155C282 156 294 161 306 166M208 154C207 131 206 112 210 88M208 128C194 113 182 103 171 91M209 122C223 107 235 97 248 86M193 144C178 128 168 118 161 103M227 142C242 126 254 116 261 101" stroke="#4A3328" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" />
+
+                <path class="tree-twigs" d="M142 152C132 146 123 144 113 145M137 128C130 119 125 113 118 108M282 148C294 143 303 141 312 142M287 123C294 115 300 109 306 104M210 88C207 75 204 66 200 58M210 88C215 76 219 68 225 60M171 91C165 81 160 74 154 70M248 86C255 76 261 70 268 66" stroke="#5A3F32" stroke-width="2" stroke-linecap="round" />
+              </g>
+
+              <g class="tree-canopy-group">
+                <g class="canopy-back">
+                  <ellipse cx="144" cy="144" rx="44" ry="34" />
+                  <ellipse cx="276" cy="142" rx="46" ry="35" />
+                  <ellipse cx="210" cy="96" rx="54" ry="42" />
+                  <ellipse cx="170" cy="112" rx="40" ry="34" />
+                  <ellipse cx="252" cy="112" rx="40" ry="34" />
+                </g>
+
+                <g class="canopy-mid">
+                  <ellipse cx="132" cy="152" rx="33" ry="26" />
+                  <ellipse cx="288" cy="150" rx="34" ry="26" />
+                  <ellipse cx="182" cy="134" rx="38" ry="30" />
+                  <ellipse cx="238" cy="132" rx="39" ry="30" />
+                  <ellipse cx="210" cy="78" rx="42" ry="32" />
+                  <ellipse cx="164" cy="96" rx="30" ry="25" />
+                  <ellipse cx="256" cy="94" rx="30" ry="25" />
+                </g>
+
+                <g class="canopy-front">
+                  <circle cx="154" cy="138" r="22" />
+                  <circle cx="266" cy="136" r="23" />
+                  <circle cx="210" cy="108" r="28" />
+                  <circle cx="186" cy="86" r="20" />
+                  <circle cx="234" cy="85" r="21" />
+                  <circle cx="124" cy="148" r="18" />
+                  <circle cx="296" cy="146" r="18" />
+                </g>
+
+                <g class="oxygen-orbs" filter="url(#softGlow)">
+                  <circle class="o2-orb o2-1" cx="138" cy="112" r="2.8" />
+                  <circle class="o2-orb o2-2" cx="274" cy="104" r="2.4" />
+                  <circle class="o2-orb o2-3" cx="208" cy="54" r="3" />
+                  <circle class="o2-orb o2-4" cx="164" cy="164" r="2.2" />
+                  <circle class="o2-orb o2-5" cx="256" cy="162" r="2.5" />
+                </g>
+              </g>
+            </svg>
+
+            <canvas id="biosphereCanvas" class="biosphere-canvas" aria-hidden="true"></canvas>
+          </div>
+
+          <div class="telemetry-cards-grid">
+            <article class="metric-card">
+              <div class="metric-header">
+                <span class="metric-symbol">PM2.5</span>
+                <span class="metric-name">İnce Partikül</span>
+              </div>
+              <div class="metric-value-row">
+                <span id="valPm25" class="metric-value">--</span>
+                <span class="metric-unit">µg/m³</span>
+              </div>
+              <div class="metric-bar-track"><div id="barPm25" class="metric-bar-fill"></div></div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-header">
+                <span class="metric-symbol">PM10</span>
+                <span class="metric-name">Kaba Partikül</span>
+              </div>
+              <div class="metric-value-row">
+                <span id="valPm10" class="metric-value">--</span>
+                <span class="metric-unit">µg/m³</span>
+              </div>
+              <div class="metric-bar-track"><div id="barPm10" class="metric-bar-fill"></div></div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-header">
+                <span class="metric-symbol">NO₂</span>
+                <span class="metric-name">Azot Dioksit</span>
+              </div>
+              <div class="metric-value-row">
+                <span id="valNo2" class="metric-value">--</span>
+                <span class="metric-unit">µg/m³</span>
+              </div>
+              <div class="metric-bar-track"><div id="barNo2" class="metric-bar-fill"></div></div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-header">
+                <span class="metric-symbol">O₃</span>
+                <span class="metric-name">Ozon Yoğunluğu</span>
+              </div>
+              <div class="metric-value-row">
+                <span id="valO3" class="metric-value">--</span>
+                <span class="metric-unit">µg/m³</span>
+              </div>
+              <div class="metric-bar-track"><div id="barO3" class="metric-bar-fill"></div></div>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <section id="teamView" class="team-overlay hidden" role="tabpanel" aria-labelledby="tabTeam">
+        <div class="team-container">
+          <div class="team-header-block">
+            <div class="team-header-top">
+              <span class="telemetry-tag">NASA SPACE APPS CHALLENGE 2026 // DENİZLİ YEREL ETKİNLİĞİ</span>
+              <button id="closeTeamBtn" class="close-team-btn" type="button" aria-label="Monitöre Geri Dön">
+                <span>Monitöre Dön</span>
+                <svg class="icon-xs" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+            <h1 class="team-heading">AeroJukebox Geliştirici Ekibi</h1>
+            <p class="team-lead">
+              “The Earth Information Jukebox” görevi kapsamında, gerçek zamanlı atmosfer ve hava kalitesi telemetrisini görsel ekosistem tepkilerine ve çok katmanlı Web Audio API sonifikasyonuna dönüştürmek üzere <strong>NASA Space Apps Challenge 2026 Denizli</strong> yerel etkinliğinde geliştirilmiştir.
+            </p>
+          </div>
+
+          <div class="team-grid">
+            <article class="team-card">
+              <div class="team-card-index">SYS // 01</div>
+              <h2 class="member-name">Toprak Türeci</h2>
+              <p class="member-role">Yazılım Geliştirici &amp; Sistem Mimarisi</p>
+              <p class="member-desc">Gerçek zamanlı Open-Meteo veri boru hattı, çevrimdışı telemetri sigortası ve çekirdek uygulama mimarisi.</p>
+            </article>
+
+            <article class="team-card">
+              <div class="team-card-index">GUI // 02</div>
+              <h2 class="member-name">Eymen Kozal</h2>
+              <p class="member-role">GUI Planlayıcı &amp; Arayüz Tasarımcısı</p>
+              <p class="member-desc">Uzay telemetri arayüzü tasarımı, 3 bölgeli veri hiyerarşisi ve dinamik Biyosfer Ağacı görsel sistemi.</p>
+            </article>
+
+            <article class="team-card">
+              <div class="team-card-index">AUD // 03</div>
+              <h2 class="member-name">Yağmur Yumukoğlu</h2>
+              <p class="member-role">Ses Sorumlusu &amp; Sonification Tasarımı</p>
+              <p class="member-desc">Web Audio API tabanlı harmonik akor sentezi, partikül parazit modülasyonu ve ses manzarası mühendisliği.</p>
+            </article>
+
+            <article class="team-card">
+              <div class="team-card-index">SCI // 04</div>
+              <h2 class="member-name">Defne Kayrakçı</h2>
+              <p class="member-role">Proje Sunumu &amp; Bilimsel İçerik</p>
+              <p class="member-desc">Atmosferik kirletici eşiklerinin kurgulanması, tarihsel iklim referans modeli ve bilimsel anlatım.</p>
+            </article>
+
+            <article class="team-card">
+              <div class="team-card-index">STR // 05</div>
+              <h2 class="member-name">Alper Selim Bilginer</h2>
+              <p class="member-role">Proje Sunumu &amp; Strateji</p>
+              <p class="member-desc">NASA Earth Information Center erişilebilirlik standartları, kullanıcı deneyimi stratejisi ve sunum koordinasyonu.</p>
+            </article>
+          </div>
+
+          <div class="sources-panel">
+            <h3 class="sources-title">BİLİMSEL VERİ KAYNAKLARI VE REFERANSLAR</h3>
+            <div class="sources-grid">
+              <div class="source-item">
+                <span class="source-code">NASA EIC</span>
+                <span class="source-name">NASA Earth Information Center</span>
+                <span class="source-detail">Küresel çevresel telemetri ve erişilebilir veri sonifikasyon standartları</span>
+              </div>
+              <div class="source-item">
+                <span class="source-code">TEMPO</span>
+                <span class="source-name">NASA TEMPO Mission</span>
+                <span class="source-detail">Troposferik Emisyonlar: NO₂, O₃ ve aerosol kirliliği yüksek çözünürlüklü izleme</span>
+              </div>
+              <div class="source-item">
+                <span class="source-code">AURA / OMI</span>
+                <span class="source-name">NASA Aura Satellite</span>
+                <span class="source-detail">Küresel atmosferik kimya, ozon tabakası ve hava kalitesi uydu gözlem arşivi</span>
+              </div>
+              <div class="source-item">
+                <span class="source-code">CAMS / API</span>
+                <span class="source-name">Open-Meteo Air Quality API</span>
+                <span class="source-detail">Gerçek zamanlı PM2.5, PM10, NO₂, O₃ ve European AQI veri entegrasyonu</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="jukebox-bar" role="region" aria-label="Jukebox Ses Kontrol Konsolu">
+      <div class="jukebox-left">
+        <button id="prevStationBtn" class="jb-icon-btn" type="button" title="Önceki İstasyon (Sol Ok)" aria-label="Önceki istasyon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M19 20L9 12L19 4V20Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><line x1="5" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+
+        <button id="playPauseBtn" class="jb-play-btn" type="button" title="Sonifikasyonu Oynat/Duraklat (Boşluk)" aria-label="Sonifikasyonu oynat veya duraklat">
+          <svg id="playIcon" viewBox="0 0 24 24" fill="none"><path d="M7 5L19 12L7 19V5Z" fill="currentColor"/></svg>
+          <svg id="pauseIcon" class="hidden" viewBox="0 0 24 24" fill="none"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+          <span id="playBtnLabel">SESİ BAŞLAT</span>
+        </button>
+
+        <button id="nextStationBtn" class="jb-icon-btn" type="button" title="Sonraki İstasyon (Sağ Ok)" aria-label="Sonraki istasyon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 4L15 12L5 20V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+
+        <button id="randomLocBtn" class="jb-random-btn" type="button" title="Rastgele Konum Keşfet (Kısayol: R)">
+          <svg class="icon-xs" viewBox="0 0 24 24" fill="none"><path d="M16 3H21V8M4 20L21 3M21 16V21H16M15 15L21 21M4 4L9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Rastgele Konum Keşfet</span>
+        </button>
+      </div>
+
+      <div class="jukebox-center">
+        <div class="jukebox-display">
+          <div class="jb-track-info">
+            <span id="jukeboxTitle" class="jb-title">Denizli, Türkiye</span>
+            <span id="jukeboxStatus" class="jb-status">AQI -- • BEKLEMEDE</span>
+          </div>
+          <div id="sonificationModeText" class="jb-synth-tag">STANDBY // HARMONİK SENTEZ HAZIR</div>
+        </div>
+        <div class="visualizer-frame">
+          <canvas id="visualizerCanvas" aria-label="Gerçek zamanlı ses frekans spektrumu"></canvas>
+        </div>
+      </div>
+
+      <div class="jukebox-right">
+        <div class="volume-control">
+          <button id="muteBtn" class="jb-icon-btn sm" type="button" title="Sesi Kapat/Aç (M)" aria-label="Sesi kapat veya aç">
+            <svg id="volHighIcon" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M15.54 8.46C16.48 9.4 17 10.67 17 12C17 13.33 16.48 14.6 15.54 15.54" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <svg id="volMuteIcon" class="hidden" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M23 9L17 15M17 9L23 15" stroke="#EF4444" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </button>
+          <input id="volumeSlider" class="volume-slider" type="range" min="0" max="100" value="72" aria-label="Ana Ses Seviyesi" />
+          <span id="volumeValue" class="volume-val">72%</span>
+        </div>
+
+        <button id="shortcutsBtn" class="jb-icon-btn sm" type="button" title="Klavye Kısayolları" aria-label="Klavye kısayollarını göster">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9.5" stroke="currentColor" stroke-width="1.7"/><path d="M9.5 9.5C9.5 8.1 10.6 7 12 7C13.4 7 14.5 8.1 14.5 9.5C14.5 10.8 13.4 11.4 12.6 12C12.1 12.4 12 12.9 12 13.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="16.8" r="1" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <div id="shortcutsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="telemetry-tag">ACCESSIBILITY // NASA EIC PROTOCOL</span>
+          <h2 id="shortcutsTitle" class="modal-title">Klavye Kısayolları ve Erişilebilirlik</h2>
+        </div>
+        <button id="closeShortcutsBtn" class="close-team-btn" type="button" aria-label="Kapat">
+          <svg class="icon-xs" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="shortcuts-list">
+        <div class="shortcut-row"><kbd>Space</kbd><span>Sonifikasyonu Oynat / Duraklat</span></div>
+        <div class="shortcut-row"><kbd>←</kbd> / <kbd>→</kbd><span>Önceki / Sonraki Referans İstasyon</span></div>
+        <div class="shortcut-row"><kbd>R</kbd><span>Rastgele Küresel Konum Keşfet</span></div>
+        <div class="shortcut-row"><kbd>V</kbd><span>Web Speech API Sesli Okumayı Aç/Kapat</span></div>
+        <div class="shortcut-row"><kbd>M</kbd><span>Ana Sesi Kapat / Aç</span></div>
+        <div class="shortcut-row"><kbd>Esc</kbd><span>Açık Pencereyi Kapat</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>
