@@ -1,5 +1,3 @@
-# nasa-space-apps-ttcodersstudio
-
 # 🌍 AeroJukebox — Earth Information Center Telemetry & Sonification
 
 ![NASA Space Apps Challenge 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026%20Denizli-0B3D91?style=for-the-badge&logo=nasa)
@@ -7,79 +5,79 @@
 ![Audio](https://img.shields.io/badge/Audio-Web%20Audio%20API-10B981?style=for-the-badge)
 ![Languages](https://img.shields.io/badge/Languages-TR%20%7C%20EN%20%7C%20DE%20%7C%20FR%20%7C%20CS-8B5CF6?style=for-the-badge)
 
-**AeroJukebox**, NASA'nın *"The Earth Information Jukebox"* görevi kapsamında geliştirilmiş; gerçek zamanlı uydu telemetrisini, hava kalitesini, aktif orman yangınlarını ve gece ışık kirliliğini **yaşayan prosedürel bir Biyosfer Ağacına**, **sinematik bir müzik deneyimine (Sonifikasyon)** ve **erişilebilir sesli rehbere** dönüştüren çok duyulu bir Dünya gözlemevidir.
+**AeroJukebox** is a multi-sensory Earth observatory built for the NASA Space Apps Challenge *"The Earth Information Jukebox"* track. It transforms real-time NASA satellite telemetry, air quality pollutants, active global wildfires, and night-time light pollution into a **living procedural Biosphere Tree**, **cinematic real-time Web Audio sonification**, and **accessible voice narration**.
 
 ---
 
-## 🎯 Problem ve Çözüm
+## 🎯 Problem & Solution
 
-NASA Dünya Bilgi Merkezi (EIC), gezegenimizin değişimini izleyen olağanüstü görselleştirmeler üretir; ancak veriyi yalnızca görsel grafiklerle sunmak görme engelli ve az gören bireyleri dışlar, ayrıca iklim verilerinin duygusal etkisini sınırlar.
+NASA’s Earth Information Center (EIC) produces remarkable visualizations tracking our changing planet, yet relying exclusively on visual media limits accessibility for blind and low-vision users and weakens the public’s emotional connection to complex Earth science data.
 
-**AeroJukebox**, görmeyi sese ve yaşayan bir ekosisteme çevirerek bu boşluğu kapatır:
-- Dünyanın herhangi bir noktasına tıklandığında canlı NASA ve çevre verilerini çeker.
-- Veriyi **5 evreli fraktal ağaç simülasyonuna** ve **kulak yormayan harmonik müziklere** dönüştürür.
-- **5 dilde sesli betimleme**, tam klavye kontrolü ve **Google Gemini AI** asistanı ile bilimsel veriyi herkes için erişilebilir kılar.
+**AeroJukebox** bridges this gap by translating sight into sound and living ecology:
+- Click anywhere on the globe to stream live NASA and atmospheric telemetry.
+- Experience the data through a **5-stage fractal botanical tree simulation** and **musically quantized, non-fatiguing soundscapes**.
+- Navigate effortlessly in **5 languages** with Web Speech API narration, full keyboard accessibility, and **AeroAI** (context-aware Google Gemini assistant).
 
 ---
 
-## ✨ Temel Özellikler
+## ✨ Key Features
 
-### 1. 🛰️ 3 Bağımsız Küresel Radar Haritası
-- **🌫️ Hava Kalitesi Radarı:** Open-Meteo (Copernicus CAMS) ve NASA POWER verilerini birleştirerek `PM2.5`, `PM10`, `NO₂`, `O₃`, `CO`, `NASA Solar Işınım (kWh/m²)`, Sıcaklık (`°C`), Nem (`%`), `EAQI` ve `US AQI` takibi yapar.
-- **🔥 Yangın & Termal Risk Radarı:** Hava kalitesinden bağımsız olarak **NASA EONET API** üzerinden dünyadaki aktif orman yangınlarını haritada işaretler ve sıcaklık, nem, toz verileriyle **Fire Weather Index (FWI %5–100)** hesaplar.
-- **🌌 Işık Kirliliği Radarı:** **NASA GIBS VIIRS Black Marble** gece ışıkları katmanını haritaya bindirir ve **Bortle Ölçeği (1–9)** üzerinden yapay gökyüzü parlamasını (*Skyglow %*) analiz eder.
+### 1. 🛰️ 3 Independent Global Satellite Radar Maps
+- **🌫️ Air Quality Radar:** Combines Open-Meteo (Copernicus CAMS) and NASA POWER telemetry to monitor `PM2.5`, `PM10`, `NO₂`, `O₃`, `CO`, `NASA Solar Irradiance (kWh/m²)`, Temperature (`°C`), Relative Humidity (`%`), `EAQI`, and `US AQI`.
+- **🔥 Wildfire & Thermal Risk Radar:** Completely independent from air quality. Plots **live active global wildfires from NASA EONET** directly on the map and computes the **Fire Weather Index (FWI 5%–100%)** from temperature, low humidity, and coarse dust.
+- **🌌 Light Pollution Radar:** Overlays the official **NASA GIBS VIIRS Black Marble** night-lights satellite layer and calculates artificial skyglow (`%`) on the **Bortle Scale (1–9)**.
 
-### 2. 🌳 ULTRA Prosedürel Fraktal Biyosfer Ağacı (60 FPS Canvas)
-- **Hava Modu (5 Evre):** Zümrüt yapraklı ve çiçekli sağlıklı ağaçtan (*Evre 1*), klorofil kaybı ve fiziksel yaprak dökümüne (*Evre 3–4*), oradan çatlamış kuru iskelet ve PM2.5 duman fırtınasına (*Evre 5*) pürüzsüz geçiş yapar.
-- **Yangın Modu:** FWI `%50` eşiğini aştığında gövde kömürleşir, dallarda titreyen gerçekçi alev dilleri ve gökyüzüne uçuşan kor kıvılcımları oluşur.
-- **Işık Kirliliği Modu:** Karanlık gökyüzünde (*Bortle 1–3*) yıldızlar ve dans eden ateş böcekleri; yoğun şehir parlamasında (*Bortle 7–9*) ise yıldızları silen yapay ışık konisi ve ışığa takılmış gece güveleri belirir.
+### 2. 🌳 ULTRA Procedural Fractal Biosphere Tree (60 FPS Canvas)
+- **Air Quality Mode (5 Stages):** Smoothly transitions from lush emerald foliage, blossoms, and rising O₂ orbs (*Stage 1*) to chlorophyll loss and physics-driven falling amber leaves (*Stages 3–4*), down to a bare fractured skeleton inside a PM2.5 smog storm (*Stage 5*).
+- **Wildfire Mode:** Above `50%` FWI, the trunk chars and dynamic flames with rising glowing embers erupt across the branches.
+- **Light Pollution Mode:** Under dark skies (*Bortle 1–3*), twinkling stars and dancing fireflies appear; under severe urban glare (*Bortle 7–9*), artificial spotlight cones wash out the stars and trap nocturnal moths.
 
-### 3. 🎵 Sinematik Web Audio API Sonifikasyon Motoru
-- Dışarıdan hazır ses dosyası çekmeden tarayıcı içinde sıfır gecikmeyle sentezlenir.
-- Çıkış katmanında **`DynamicsCompressor` + `2.2x Makeup Gain`** ile bozulmasız, güçlü ve doygun ses sunar.
-- **Veri → Ses Eşleme Tablosu:**
+### 3. 🎵 Cinematic Web Audio API Sonification Engine
+- Synthesized in real time in the browser with zero external audio files.
+- Equipped with a **`DynamicsCompressor` + `2.2x Makeup Gain`** stage for rich, loud, clipping-free playback.
+- **Data → Visual → Sound Mapping:**
 
-| Mod / Durum | Biyosfer Tepkisi | Müzikal Ölçek & Ses Tasarımı |
+| Mode / Stage | Biosphere Reaction | Musical Scale & Sound Design |
 | :--- | :--- | :--- |
-| **Evre 1 (Mükemmel)** | Gür zümrüt yapraklar, çiçekler, O₂ | C Lydian pad + kristal pentatonik çanlar |
-| **Evre 2 (Dengeli)** | Doğal yeşil kanopi | C Maj9 akorları + ılık kalimba nabzı |
-| **Evre 3 (Hafif Stres)** | Kehribar sararması, ilk dökülme | D Dorian / Sus4 + melankolik inen notalar |
-| **Evre 4 (Yüksek Stres)** | Yoğun yaprak dökümü, sert rüzgar | E Phrygian + kalp atışı ritimli bas |
-| **Evre 5 (Kritik Alarm)** | Yapraksız çatlak iskelet, PM2.5 dumanı | 380 Hz low-pass boğuk bas + sonar uyarısı |
-| **Yangın (FWI ≥ %50)** | Alev alan dallar & uçuşan korlar | F-Minör bas dronu + odun/kor çıtırtıları |
-| **Işık (Bortle 1–3 vs 7–9)** | Yıldızlı gece vs yapay şehir ışığı | Yıldız arpı vs 60 Hz şehir neon uğultusu |
+| **Stage 1 (Excellent)** | Lush emerald leaves, blossoms, O₂ orbs | C Lydian pad + crystalline pentatonic chimes |
+| **Stage 2 (Balanced)** | Healthy green canopy | C Maj9 chords + warm kalimba pulse |
+| **Stage 3 (Mild Stress)** | Amber foliage, early leaf shedding | D Dorian / Sus4 + melancholic descending notes |
+| **Stage 4 (High Stress)** | Heavy leaf fall, gusty winds | E Phrygian + rhythmic heartbeat sub-bass |
+| **Stage 5 (Critical Alarm)** | Bare fractured skeleton, PM2.5 storm | 380 Hz low-pass cinematic sub drone + sonar alert |
+| **Wildfire (FWI ≥ 50%)** | Burning branches & rising embers | F-Minor tension drone + layered wood crackles |
+| **Light (Bortle 1–3 vs 7–9)** | Starry night vs urban skyglow | Starlight harp vs 60 Hz city neon hum |
 
-### 4. 🤖 AeroAI (Google Gemini AI Asistanı)
-- O an seçili koordinatın tüm canlı uydu verilerini, aktif harita modunu ve tarihsel yılı bağlam olarak alarak derin bilimsel analizler üretir.
-- Çok turlu sohbet hafızasına sahiptir, konu dışı gereksiz soruları filtreler ve API anahtarı girilmediğinde dahi çevrimdışı akıllı analiz motoruyla çalışmayı sürdürür.
+### 4. 🤖 AeroAI (Google Gemini Telemetry Assistant)
+- Injects live coordinates, all 8 sensor metrics, active radar mode, and tree stage directly into the AI prompt context.
+- Supports multi-turn conversation memory, strictly filters out off-topic queries, and includes a smart intent-aware offline analysis fallback when no API key is entered.
 
-### 5. ⏳ 1750–2026 Tarihsel Atmosfer Simülatörü & Erişilebilirlik
-- **Tarihsel Karşılaştırma:** 2026 canlı uydu verisini, 1750 sanayi öncesi doğal baz değerlerle antropojenik emisyon eğrisi üzerinden kıyaslar.
-- **5 Dil Desteği:** Türkçe (`TR`), İngilizce (`EN`), Almanca (`DE`), Fransızca (`FR`) ve Çekçe (`CS`).
-- **Kapsayıcı Erişilebilirlik:** Web Speech API sesli okuma (`V`), `aria-live` ekran okuyucu bildirimleri, Açık/Koyu tema, tam mobil uyumluluk ve ilk açılış **Spotlight Rehberi (`H`)**.
+### 5. ⏳ 1750–2026 Historical Simulator & Universal Accessibility
+- **Historical Comparison:** Compares live 2026 satellite measurements against a pre-industrial 1750 baseline using an exponential anthropogenic emission curve.
+- **5 Languages:** Turkish (`TR`), English (`EN`), German (`DE`), French (`FR`), and Czech (`CS`).
+- **Accessibility (WCAG):** Web Speech API voice narration (`V`), `aria-live` screen-reader announcements, Dark/Light themes, mobile-responsive layout, and a 6-step **Spotlight Onboarding Tour (`H`)**.
 
 ---
 
-## 📁 Proje Klasör Yapısı
+## 📁 Project Structure
 
 ```text
 aerojukebox/
-├── index.html                  # Ana uygulama iskeleti, erişilebilir ARIA yapısı ve modallar
+├── index.html                  # Main application layout, ARIA semantics, and modals
 ├── css/
-│   └── style.css               # Uzay telemetri teması (Açık/Koyu), responsive ızgara ve rehber stilleri
+│   └── style.css               # Space telemetry theme (Dark/Light), responsive grid, tour & AI UI
 ├── js/
 │   ├── api/
-│   │   └── telemetryApi.js     # NASA POWER, NASA EONET, Open-Meteo, Bortle & FWI hesaplamaları
+│   │   └── telemetryApi.js     # NASA POWER, NASA EONET, Open-Meteo, Bortle & FWI models
 │   ├── audio/
-│   │   └── audioEngine.js      # DynamicsCompressor + 2.2x Boost Web Audio sentezleyici
+│   │   └── audioEngine.js      # DynamicsCompressor + 2.2x Boost Web Audio synthesizer
 │   ├── map/
-│   │   └── mapManager.js       # Leaflet tek renk harita, NASA GIBS VIIRS & EONET yangın pinleri
+│   │   └── mapManager.js       # Leaflet monochrome map, NASA GIBS VIIRS & EONET wildfire pins
 │   ├── tour/
-│   │   └── onboardingTour.js   # 5 dilli interaktif Spotlight başlangıç rehberi
+│   │   └── onboardingTour.js   # 5-language interactive Spotlight onboarding tour
 │   ├── tree/
-│   │   ├── particleSystem.js   # O₂, dökülen yaprak, smog, alev koru ve ateş böceği fiziği
-│   │   └── treeRenderer.js     # Prosedürel fraktal ağaç, yıldızlı gece ve yangın alev çizimleri
-│   └── app.js                  # Ana koordinatör, 5 dil sözlüğü (i18n) ve Gemini AI entegrasyonu
+│   │   ├── particleSystem.js   # O₂, falling leaves, smog, fire embers & firefly physics
+│   │   └── treeRenderer.js     # Procedural fractal tree, starry night & wildfire rendering
+│   └── app.js                  # Core orchestrator, 5-language i18n dictionary & Gemini AI
 └── assets/
-    ├── nasa.jpg                # Giriş (Splash) ekranı NASA Space Apps logosu
-    └── ttcs.jpg                # Giriş (Splash) ekranı takım logosu
+    ├── nasa.jpg                # Splash screen NASA Space Apps logo
+    └── ttcs.jpg                # Splash screen team logo
