@@ -1,11 +1,11 @@
 (() => {
   'use strict';
 
-  const DEFAULT_GEMINI_API_KEY = '';
+  const COSMO_AI_KEY = 'Your_Key_Here';
 
   const I18N = {
     tr: {
-      tourBtn: 'Rehber', aiBtn: 'AeroAI', voiceOn: 'Açık', voiceOff: 'Kapalı',
+      tourBtn: 'Rehber', aiBtn: 'Cosmo AI', voiceOn: 'Açık', voiceOff: 'Kapalı',
       airMode: 'Hava Kalitesi', fireMode: 'Yangın Riski', lightMode: 'Işık Kirliliği', voiceLabel: 'Sesli',
       tabMonitor: 'Monitör', tabTeam: 'Ekip', mapHint: 'Anlık NASA + uydu telemetrisi için tıklayın',
       mapAirTag: 'HAVA KALİTESİ RADARI', mapAirTitle: 'Küresel Atmosfer Analizi',
@@ -35,7 +35,7 @@
       aiChipAir: '🌫️ Detaylı Durum Analizi', aiChipSound: '🎵 Müzik & Sonifikasyon Analizi', aiChipHealth: '🫁 Sağlık & Yaşam Tavsiyesi'
     },
     en: {
-      tourBtn: 'Tour Guide', aiBtn: 'AeroAI', voiceOn: 'On', voiceOff: 'Off',
+      tourBtn: 'Tour Guide', aiBtn: 'Cosmo AI', voiceOn: 'On', voiceOff: 'Off',
       airMode: 'Air Quality', fireMode: 'Wildfire Risk', lightMode: 'Light Pollution', voiceLabel: 'Voice',
       tabMonitor: 'Monitor', tabTeam: 'Team', mapHint: 'Click map for live NASA + satellite telemetry',
       mapAirTag: 'AIR QUALITY RADAR', mapAirTitle: 'Global Atmospheric Analysis',
@@ -65,7 +65,7 @@
       aiChipAir: '🌫️ Detailed Status Analysis', aiChipSound: '🎵 Music & Sonification', aiChipHealth: '🫁 Health & Advice'
     },
     de: {
-      tourBtn: 'Anleitung', aiBtn: 'AeroAI', voiceOn: 'Ein', voiceOff: 'Aus',
+      tourBtn: 'Anleitung', aiBtn: 'Cosmo AI', voiceOn: 'Ein', voiceOff: 'Aus',
       airMode: 'Luftqualität', fireMode: 'Brandgefahr', lightMode: 'Lichtverschmutzung', voiceLabel: 'Sprache',
       tabMonitor: 'Monitor', tabTeam: 'Team', mapHint: 'Klicken für NASA-Telemetrie',
       mapAirTag: 'LUFTQUALITÄTS-RADAR', mapAirTitle: 'Globale Atmosphärenanalyse',
@@ -92,7 +92,7 @@
       aiChipAir: '🌫️ Statusanalyse', aiChipSound: '🎵 Klanganalyse', aiChipHealth: '🫁 Gesundheitstipps'
     },
     fr: {
-      tourBtn: 'Guide', aiBtn: 'AeroAI', voiceOn: 'Activé', voiceOff: 'Désactivé',
+      tourBtn: 'Guide', aiBtn: 'Cosmo AI', voiceOn: 'Activé', voiceOff: 'Désactivé',
       airMode: 'Qualité de l’air', fireMode: 'Incendies', lightMode: 'Pollution Lumineuse', voiceLabel: 'Vocal',
       tabMonitor: 'Moniteur', tabTeam: 'Équipe', mapHint: 'Cliquez pour la télémétrie NASA',
       mapAirTag: 'RADAR QUALITÉ DE L’AIR', mapAirTitle: 'Analyse Atmosphérique',
@@ -119,7 +119,7 @@
       aiChipAir: '🌫️ Analyse détaillée', aiChipSound: '🎵 Analyse sonore', aiChipHealth: '🫁 Conseils santé'
     },
     cs: {
-      tourBtn: 'Nápověda', aiBtn: 'AeroAI', voiceOn: 'Zapnuto', voiceOff: 'Vypnuto',
+      tourBtn: 'Nápověda', aiBtn: 'Cosmo AI', voiceOn: 'Zapnuto', voiceOff: 'Vypnuto',
       airMode: 'Kvalita ovzduší', fireMode: 'Požáry', lightMode: 'Světelné znečištění', voiceLabel: 'Hlas',
       tabMonitor: 'Monitor', tabTeam: 'Tým', mapHint: 'Klikněte pro živá data NASA',
       mapAirTag: 'RADAR OVZDUŠÍ', mapAirTitle: 'Globální analýza atmosféry',
@@ -255,10 +255,6 @@
     aiToggleBtn: document.getElementById('aiToggleBtn'),
     aiModal: document.getElementById('aiModal'),
     closeAiBtn: document.getElementById('closeAiBtn'),
-    aiKeyBtn: document.getElementById('aiKeyBtn'),
-    aiKeyPanel: document.getElementById('aiKeyPanel'),
-    aiKeyInput: document.getElementById('aiKeyInput'),
-    aiKeySaveBtn: document.getElementById('aiKeySaveBtn'),
     aiEngineBadge: document.getElementById('aiEngineBadge'),
     aiChatBox: document.getElementById('aiChatBox'),
     aiChatForm: document.getElementById('aiChatForm'),
@@ -402,6 +398,7 @@
     dom.barHum.style.width = `${m.hum}%`;
 
     dom.jukeboxTitle.textContent = state.locationName;
+    updateCosmoBubble();
     audioEngine.updateSonification(state.mode, m, state.stage, state.fireRisk, state.bortle, state.isMuted, state.volume);
   }
 
@@ -514,130 +511,566 @@
   }
 
   // =========================================================
-  // GEMINI AI ASİSTANI (HAFIZALI & 3 MODU DA DESTEKLER)
+  // COSMO AI — GEMINI MOTORU (SABİT API ANAHTARI, HAFIZALI)
   // =========================================================
+  const COSMO_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta';
+  const COSMO_PREFERRED_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+  const COSMO_BLOCKED_MODEL = /image|tts|embed|computer-use|robotics|deep-research|antigravity|transcribe|omni|veo|imagen|lyria|gemma|nano-banana/;
+  const COSMO_LANG_NAMES = { tr: 'Turkish', en: 'English', de: 'German', fr: 'French', cs: 'Czech' };
+
   const aiChatHistory = [];
+  let cosmoModelCache = null;
+  let cosmoBusy = false;
 
-  function getActiveGeminiKey() {
-    let stored = '';
-    try { stored = localStorage.getItem('aero_gemini_key') || ''; } catch {}
-    return stored || DEFAULT_GEMINI_API_KEY;
+  function cosmoModelVersion(name) {
+    const found = /^gemini-(\d+(?:\.\d+)?)/.exec(name || '');
+    return found ? parseFloat(found[1]) : 0;
   }
 
-  function updateAiKeyUI() {
-    const key = getActiveGeminiKey();
-    if (dom.aiEngineBadge) {
-      dom.aiEngineBadge.textContent = key ? '✨ Gemini AI Bağlı' : 'API Anahtarı Girin (veya Çevrimdışı Mod)';
-      dom.aiEngineBadge.style.color = key ? '#34D399' : '#F59E0B';
+  async function resolveCosmoModels() {
+    if (cosmoModelCache) return cosmoModelCache;
+
+    let available = [];
+    try {
+      const res = await fetch(`${COSMO_ENDPOINT}/models?pageSize=200&key=${encodeURIComponent(COSMO_AI_KEY)}`);
+      if (res.ok) {
+        const data = await res.json();
+        available = (data.models || [])
+          .filter(x => (x.supportedGenerationMethods || []).includes('generateContent'))
+          .map(x => String(x.name || '').replace(/^models\//, ''))
+          .filter(n => n.startsWith('gemini-') && !COSMO_BLOCKED_MODEL.test(n));
+      }
+    } catch (err) {
+      /* ağ yoksa sabit listeye düşeriz */
     }
-    if (dom.aiKeyPanel && key) dom.aiKeyPanel.classList.add('hidden');
+
+    const ordered = [];
+    const push = name => {
+      if (!name || ordered.includes(name)) return;
+      if (available.length && !available.includes(name)) return;
+      ordered.push(name);
+    };
+
+    COSMO_PREFERRED_MODELS.forEach(push);
+    available
+      .filter(n => /flash/.test(n) && !/preview|experimental|exp$/.test(n))
+      .sort((a, b) => cosmoModelVersion(b) - cosmoModelVersion(a))
+      .forEach(push);
+
+    if (!ordered.length) COSMO_PREFERRED_MODELS.forEach(n => ordered.push(n));
+    cosmoModelCache = ordered.slice(0, 3);
+    return cosmoModelCache;
   }
 
-  async function callGeminiAI(userPrompt) {
-    const apiKey = getActiveGeminiKey();
-    const m = state.activeMetrics;
-    const airInfo = window.AeroTelemetryApi.classifyAqi(m.aqi, state.lang);
-    const fireInfo = window.AeroTelemetryApi.calculateFireRisk(m.temp, m.hum, m.pm10, state.lang, state.isNasaActiveFire);
-    const lightInfo = window.AeroTelemetryApi.calculateLightPollution(m, state.lang);
+  function setAiEngineBadge(text, color) {
+    if (!dom.aiEngineBadge) return;
+    dom.aiEngineBadge.textContent = text;
+    dom.aiEngineBadge.style.color = color;
+  }
 
-    const snapshot = `
-[NASA & OPEN-METEO LIVE TELEMETRY]
-- Location: ${state.locationName} (${state.lat.toFixed(4)}°, ${state.lng.toFixed(4)}°)
-- Active Mode: ${state.mode.toUpperCase()} | Year: ${state.timelineYear}
-- Air Quality: US AQI ${m.aqi} (${airInfo.label}) | PM2.5=${m.pm25}, PM10=${m.pm10}, NO2=${m.no2}, O3=${m.o3}, CO=${m.co}
-- NASA POWER Solar Irradiance: ${m.solar} kWh/m² | Temp=${m.temp}°C | Humidity=%${m.hum}
-- Wildfire Risk (FWI): %${fireInfo.risk} (${fireInfo.status}) | NASA EONET Active Fire: ${state.isNasaActiveFire}
-- Light Pollution (NASA VIIRS proxy): Bortle Class ${lightInfo.bortle}/9 (%${lightInfo.percent} - ${lightInfo.status})
-`;
+  /**
+   * Tek bir model için istek atar.
+   * Dönen değer: { ok: true, text, parts } | { ok: false, fatal?, message }
+   */
+  async function requestCosmoCompletion(model, contents, systemPrompt) {
+    const payload = {
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents,
+      generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 1400, thinkingConfig: { thinkingBudget: 0 } }
+    };
 
-    if (!apiKey) {
-      return { text: generateSmartFallback(userPrompt, m, airInfo, fireInfo, lightInfo), source: '📡 Çevrimdışı Analiz (Canlı Gemini için 🔑)' };
-    }
-
-    const systemPrompt = `You are AeroAI, NASA Space Apps 2026 AeroJukebox AI Assistant.
-Respond strictly in language "${state.lang}".
-Handle greetings/identity warmly, politely reject off-topic non-Earth questions, and give deep, specific, non-repetitive analyses tailored to Air, Wildfire, Light Pollution (Bortle/VIIRS), Health, or Audio Sonification.
-${snapshot}`;
-
-    aiChatHistory.push({ role: 'user', parts: [{ text: userPrompt }] });
-    if (aiChatHistory.length > 10) aiChatHistory.splice(0, aiChatHistory.length - 10);
-
-    for (const model of ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 40000);
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+        const res = await fetch(`${COSMO_ENDPOINT}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(COSMO_AI_KEY)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ systemInstruction: { parts: [{ text: systemPrompt }] }, contents: aiChatHistory, generationConfig: { temperature: 0.75, maxOutputTokens: 900 } })
+          signal: controller.signal,
+          body: JSON.stringify(payload)
         });
-        if (res.status === 400 || res.status === 403) {
-          aiChatHistory.pop();
-          return { text: '⚠️ Geçersiz Gemini API Anahtarı! 🔑 simgesinden kontrol edin.', source: '⚠️ API Hatası' };
+
+        if (res.ok) {
+          const data = await res.json();
+          const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+          const usable = parts.filter(p => p && typeof p.text === 'string' && !p.thought);
+          const text = usable.map(p => p.text).join('').trim();
+
+          if (text) {
+            const cleanParts = usable.map(p => p.thoughtSignature
+              ? { text: p.text, thoughtSignature: p.thoughtSignature }
+              : { text: p.text });
+            return { ok: true, text, parts: cleanParts };
+          }
+
+          const block = data.promptFeedback && data.promptFeedback.blockReason;
+          return { ok: false, message: block ? `İstek güvenlik filtresine takıldı (${block}).` : 'Model boş yanıt döndürdü.' };
         }
-        if (!res.ok) continue;
-        const data = await res.json();
-        const txt = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (txt) {
-          aiChatHistory.push({ role: 'model', parts: [{ text: txt }] });
-          return { text: txt, source: `✨ Google Gemini (${model})` };
+
+        const errData = await res.json().catch(() => null);
+        const errMessage = (errData && errData.error && errData.error.message) || `HTTP ${res.status}`;
+
+        if (res.status === 400 && payload.generationConfig.thinkingConfig && /thinking/i.test(errMessage) && attempt === 0) {
+          delete payload.generationConfig.thinkingConfig;
+          continue;
         }
-      } catch {}
+        if (res.status === 401 || res.status === 403 || /API key not valid|API_KEY_INVALID|permission/i.test(errMessage)) {
+          return { ok: false, fatal: true, message: `🔐 API anahtarı doğrulanamadı. (${errMessage})` };
+        }
+        if (res.status === 400) {
+          return { ok: false, fatal: true, message: `⚠️ İstek reddedildi: ${errMessage}` };
+        }
+        if (res.status === 429 && attempt === 0) {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          continue;
+        }
+        return { ok: false, message: res.status === 503 ? 'model şu an yoğun' : errMessage };
+      } catch (err) {
+        if (err && err.name === 'AbortError') return { ok: false, message: 'istek zaman aşımına uğradı' };
+        return { ok: false, message: 'ağ bağlantısı kurulamadı' };
+      } finally {
+        clearTimeout(timer);
+      }
     }
-    aiChatHistory.pop();
-    return { text: generateSmartFallback(userPrompt, m, airInfo, fireInfo, lightInfo), source: '📡 Yedek Analiz' };
+    return { ok: false, message: 'model yanıt vermedi' };
   }
 
-  function generateSmartFallback(prompt, m, airInfo, fireInfo, lightInfo) {
+  // ---------- Selamlaşma algılama (analiz yapmadan cevap) ----------
+  const COSMO_GREETING_TOKENS = new Set([
+    'selam', 'selamlar', 'merhaba', 'meraba', 'mrb', 'hey', 'hi', 'hello', 'hallo', 'bonjour', 'salut', 'ahoj', 'hola',
+    'nasılsın', 'nasilsin', 'nasılsınız', 'nasilsiniz', 'naber', 'nabersin', 'ne', 'haber', 'nasilsin', 'nasilsiniz',
+    'how', 'are', 'you', 'doing', 'going', 'the', 'there', 'my', 'friend',
+    'wie', 'geht', 'es', 'dir', 'und', 'ça', 'va', 'comment', 'vas', 'tu', 'et',
+    'jak', 'se', 'máš', 'mas', 'a',
+    'cosmo', 'ai', 'kanka', 'dostum', 'arkadaşım', 'arkadasim', 'abi', 'hocam', 'buddy',
+    'iyi', 'günaydın', 'gunaydin', 'akşamlar', 'aksamlar', 'geceler', 'sabahlar',
+    'çok', 'cok', 'teşekkür', 'tesekkur', 'teşekkürler', 'tesekkurler', 'thanks', 'thank', 'sagol', 'sağol',
+    'iyiyim', 'iyiym', 'ben', 'de', 'da', 've', 'and', 'sen', 'you',
+    'bugün', 'bugun', 'şimdi', 'simdi', 'orada', 'efendim', 'dostum', 'kardeşim', 'kardesim'
+  ]);
+
+  const COSMO_GREETING_FALLBACK = {
+    tr: 'Merhaba! 👋 Ben **Cosmo AI**, AeroJukebox’ın bilim asistanıyım. Sohbet etmeye hazırım — istersen bir bölge adı vererek (ör. **“Tokyo nasıl?”**) o bölgenin canlı hava kalitesi, yangın riski ve ışık kirliliği analizini alabilirsin.',
+    en: 'Hi! 👋 I’m **Cosmo AI**, AeroJukebox’s science assistant. Happy to chat — name any region (e.g. **“How is Tokyo?”**) and I’ll analyse its live air quality, wildfire risk and light pollution.',
+    de: 'Hallo! 👋 Ich bin **Cosmo AI**, der Wissenschaftsassistent von AeroJukebox. Nenne einfach eine Region (z. B. **„Wie ist es in Tokio?“**) und ich analysiere Luftqualität, Waldbrandrisiko und Lichtverschmutzung.',
+    fr: 'Salut ! 👋 Je suis **Cosmo AI**, l’assistant scientifique d’AeroJukebox. Nomme une région (ex. **« Comment va Tokyo ? »**) et j’analyserai la qualité de l’air, le risque d’incendie et la pollution lumineuse.',
+    cs: 'Ahoj! 👋 Jsem **Cosmo AI**, vědecký asistent AeroJukeboxu. Napiš název oblasti (např. **„Jaké je to v Tokiu?“**) a analyzuji kvalitu ovzduší, riziko požárů a světelné znečištění.'
+  };
+
+  function lower(text) {
+    try { return String(text).toLocaleLowerCase('tr'); } catch (e) { return String(text).toLowerCase(); }
+  }
+
+  function isGreetingOnly(text) {
+    const normalized = lower(text)
+      .replace(/[!?.,;:()"'’“”~\-–—]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!normalized || normalized.length > 70) return false;
+
+    const tokens = normalized.split(' ').filter(Boolean);
+    if (!tokens.length) return false;
+
+    // "selam", "nasılsın", "selam nasılsın cosmo" gibi tamamen sohbet cümleleri
+    return tokens.every(token => COSMO_GREETING_TOKENS.has(token));
+  }
+
+  function greetingFallback() {
+    return COSMO_GREETING_FALLBACK[state.lang] || COSMO_GREETING_FALLBACK.en;
+  }
+
+  // ---------- Bölge tespiti (şehir adı verilerek analiz) ----------
+  const COSMO_STOP_WORDS = new Set([
+    'hava', 'durum', 'durumu', 'analiz', 'analizi', 'analizini', 'yangın', 'yangin', 'risk', 'riski', 'ışık', 'isik',
+    'kirliliği', 'kirliligi', 'kirlilik', 'kalitesi', 'kalite', 'sağlık', 'saglik', 'tavsiye', 'lütfen', 'lutfen',
+    'bana', 'biraz', 'detaylı', 'detayli', 'detay', 'özet', 'ozet', 'kısaca', 'kisaca', 'şu', 'su', 'an', 'anki',
+    'şimdi', 'simdi', 'bugün', 'bugun', 'yarın', 'yarin', 'için', 'icin', 'nasıl', 'nasil', 'nedir', 'ne', 'durumda',
+    'bölge', 'bolge', 'bölgesi', 'bolgesi', 'bölgesinin', 'şehir', 'sehir', 'şehri', 'sehri', 'il', 'ilçe', 'ilce',
+    'ülke', 'ulke', 'cosmo', 'ai', 'merhaba', 'selam', 'ver', 'bölgesini', 'bolgesini', 'hakkında', 'hakkinda'
+  ]);
+
+  const cosmoRegionCache = new Map();
+
+  function placeAliases(name) {
+    const full = lower(name);
+    const short = full.split(',')[0].trim();
+    const aliases = [full, short];
+    const extra = {
+      'new delhi': ['yeni delhi', 'delhi', 'new delhi'],
+      'reykjavik': ['reykjavik', 'reykjavík', 'reykjavik, izlanda'],
+      'amazon basin': ['amazon', 'amazon basin', 'amazon havzası', 'amazon havzasi'],
+      'zürich': ['zurich', 'zürich'],
+      'atacama desert': ['atacama', 'atacama çölü', 'atacama colu']
+    };
+    return aliases.concat(extra[short] || []);
+  }
+
+  function findKnownPlace(text) {
+    const haystack = ` ${lower(text)} `;
+    const pools = STATIONS
+      .map(s => ({ name: s.name, lat: s.lat, lng: s.lng }))
+      .concat(RANDOM_POINTS.map(p => ({ name: p.name, lat: p.lat, lng: p.lng })));
+
+    for (const place of pools) {
+      if (placeAliases(place.name).some(alias => alias.length > 3 && haystack.includes(alias))) {
+        return { name: place.name, lat: place.lat, lng: place.lng };
+      }
+    }
+    return null;
+  }
+
+  function extractPlaceCandidates(text) {
+    const out = [];
+    const add = value => {
+      const cleaned = String(value || '')
+        .replace(/\s+/g, ' ')
+        .replace(/^[^\p{L}]+|[^\p{L}]+$/gu, '')
+        .trim();
+      if (cleaned.length < 3 || cleaned.length > 40) return;
+      if (COSMO_STOP_WORDS.has(lower(cleaned))) return;
+      if (out.some(item => lower(item) === lower(cleaned))) return;
+      out.push(cleaned);
+    };
+
+    let match;
+    const capitalized = /\b([\p{Lu}][\p{L}'’.-]+(?:\s+[\p{Lu}][\p{L}'’.-]+){0,2})\b/gu;
+    while ((match = capitalized.exec(text)) !== null) add(match[1]);
+
+    const beforeKeyword = /([\p{L}'’.-]+(?:\s+[\p{L}'’.-]+){0,2})\s+(?:için|icin|bölgesi|bolgesi|bölgesinin|bolgesinin|şehri|sehri|nasıl|nasil|ne durumda|durumu)/giu;
+    while ((match = beforeKeyword.exec(text)) !== null) {
+      const words = match[1].split(/\s+/).filter(word => !COSMO_STOP_WORDS.has(lower(word)));
+      if (words.length) add(words.slice(-2).join(' '));
+    }
+
+    const withSuffix = /([\p{L}]{3,})\s*(?:'|’)(?:te|ta|de|da|nin|nın|nin)\b/giu;
+    while ((match = withSuffix.exec(text)) !== null) add(match[1]);
+
+    return out.slice(0, 5);
+  }
+
+  async function geocodePlace(name) {
+    try {
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=${state.lang}&format=json`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const result = data.results && data.results[0];
+      if (!result) return null;
+
+      const feature = String(result.feature_code || '');
+      const isPlace = feature.startsWith('PPL') || feature === 'ADM1' || feature === 'ADM2';
+      if (!isPlace) return null;
+
+      const sameName = lower(result.name || '') === lower(name);
+      const bigEnough = (result.population || 0) >= 20000;
+      if (!sameName && !bigEnough) return null;
+
+      const countryShort = {
+        'türkiye cumhuriyeti': 'Türkiye',
+        'turkiye cumhuriyeti': 'Türkiye',
+        'republic of türkiye': 'Türkiye',
+        'united states of america': 'ABD',
+        'united kingdom': 'Birleşik Krallık',
+        'russian federation': 'Rusya',
+        'czech republic': 'Çekya'
+      }[lower(result.country || '')] || result.country;
+
+      return {
+        name: `${result.name}${countryShort ? ', ' + countryShort : ''}`,
+        lat: result.latitude,
+        lng: result.longitude
+      };
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async function detectRegion(text) {
+    const known = findKnownPlace(text);
+    if (known) return known;
+
+    for (const candidate of extractPlaceCandidates(text)) {
+      const key = lower(candidate);
+      if (cosmoRegionCache.has(key)) {
+        const cached = cosmoRegionCache.get(key);
+        if (cached) return cached;
+        continue;
+      }
+      const found = await geocodePlace(candidate);
+      cosmoRegionCache.set(key, found);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function trimCosmoHistory() {
+    while (aiChatHistory.length > 10) aiChatHistory.shift();
+  }
+
+  async function runCosmoModels(models, contents, systemPrompt) {
+    let lastIssue = '';
+    for (const model of models) {
+      const result = await requestCosmoCompletion(model, contents, systemPrompt);
+      if (result.ok) return { ok: true, model, text: result.text, parts: result.parts };
+      if (result.fatal) return { ok: false, fatal: true, message: result.message };
+      lastIssue = result.message;
+    }
+    return { ok: false, message: lastIssue || 'model yanıt vermedi' };
+  }
+
+  function buildTelemetrySnapshot(place) {
+    const m = place.metrics;
+    const air = window.AeroTelemetryApi.classifyAqi(m.aqi, state.lang);
+    const fire = window.AeroTelemetryApi.calculateFireRisk(m.temp, m.hum, m.pm10, state.lang, !!place.nasaFire);
+    const light = window.AeroTelemetryApi.calculateLightPollution(m, state.lang);
+
+    const text = `
+[${place.isCurrent ? 'LIVE TELEMETRY' : 'LIVE TELEMETRY FOR THE REQUESTED REGION'}]
+- Location: ${place.name} (${place.lat.toFixed(4)}°, ${place.lng.toFixed(4)}°)
+- Data source: ${place.source || state.dataSource}
+- Active Mode: ${state.mode.toUpperCase()} | Timeline Year: ${state.timelineYear}
+- Air Quality: US AQI ${m.aqi} (${air.label}) | PM2.5=${m.pm25}, PM10=${m.pm10}, NO2=${m.no2}, O3=${m.o3}, CO=${m.co}
+- NASA POWER Solar Irradiance: ${m.solar} kWh/m² | Temp=${m.temp}°C | Humidity=%${m.hum}
+- Wildfire Risk (FWI): %${fire.risk} (${fire.status}) | NASA EONET Active Fire: ${!!place.nasaFire}
+- Light Pollution (NASA VIIRS proxy): Bortle Class ${light.bortle}/9 (%${light.percent} - ${light.status})
+- Today: ${new Date().toISOString().slice(0, 10)}
+`;
+
+    return { air, fire, light, text };
+  }
+
+  function buildSciencePrompt(snapshotText, place) {
+    const mapNote = place.isCurrent
+      ? `The map's selected point is "${place.name}". Use its live telemetry for questions like "here", "this location" or "current".`
+      : `The user explicitly asked about "${place.name}". Real live telemetry was just fetched for that region and is included below. Analyse THAT region in detail. The map console still shows "${state.locationName}" because it is the previous selection; do not confuse the two and never claim you only have data for the map point.`;
+
+    return `You are "Cosmo AI", the friendly science assistant built into AeroJukebox (NASA Space Apps Challenge 2026, Denizli). AeroJukebox turns live NASA satellite telemetry (NASA POWER, EONET, GIBS/VIIRS) and Open-Meteo air-quality data into music (Web Audio sonification).
+
+Rules:
+- ALWAYS answer in ${COSMO_LANG_NAMES[state.lang] || 'English'}.
+- Stay on Earth science: air quality, wildfires, light pollution (Bortle/VIIRS), health advice, sonification, NASA data, and this app. Politely decline unrelated topics (recipes, football, math homework...) in one short sentence.
+- ${mapNote}
+- Use the exact telemetry numbers below; never invent different values.
+- If the question is about a different region than the map selection, do not claim that the app's current audio/visuals are already driven by that region.
+- Be specific, concrete and non-repetitive. Max ~180 words unless the user asks for depth.
+- Formatting: short paragraphs, **bold** key values, bullet lines starting with "• ". Never use HTML or markdown tables.
+${snapshotText}`;
+  }
+
+  async function callCosmoAI(userPrompt, onStatus) {
+    const models = await resolveCosmoModels();
+    const say = typeof onStatus === 'function' ? onStatus : () => {};
+    const langName = COSMO_LANG_NAMES[state.lang] || 'English';
+
+    aiChatHistory.push({ role: 'user', parts: [{ text: userPrompt }] });
+    trimCosmoHistory();
+
+    // 1) Sadece selamlaşma / küçük sohbet -> telemetri analizi YAPMA
+    if (isGreetingOnly(userPrompt)) {
+      const greetingPrompt = `You are "Cosmo AI", the friendly science assistant built into AeroJukebox (NASA Space Apps Challenge 2026). The user is only greeting you or making small talk.
+Rules:
+- Answer in ${langName}.
+- Reply warmly in 1-3 short sentences, like a friendly character.
+- Do NOT analyse telemetry, do NOT mention AQI, PM2.5, Bortle, wildfire risk or any measured values.
+- Gently invite the user to ask about a specific region by name (e.g. "How is Tokyo?"), or about the location selected on the map.`;
+
+      const result = await runCosmoModels(models, aiChatHistory, greetingPrompt);
+      if (result.ok) {
+        aiChatHistory.push({ role: 'model', parts: result.parts });
+        trimCosmoHistory();
+        setAiEngineBadge('✨ Gemini Bağlı', '#34D399');
+        return { text: result.text, source: `✨ Google Gemini • ${result.model}` };
+      }
+      aiChatHistory.pop();
+      return { text: greetingFallback(), source: '📡 Yerel Yanıt' };
+    }
+
+    // 2) İstenen bölge var mı? (ör. "Tokyo nasıl?", "Denizli için analiz")
+    say('📍 Bölge tespit ediliyor...');
+    const region = await detectRegion(userPrompt).catch(() => null);
+
+    let place = {
+      name: state.locationName,
+      lat: state.lat,
+      lng: state.lng,
+      metrics: state.activeMetrics,
+      nasaFire: state.isNasaActiveFire,
+      source: state.dataSource,
+      isCurrent: true
+    };
+
+    if (region) {
+      say(`📍 ${region.name} canlı verileri alınıyor...`);
+      const tel = await window.AeroTelemetryApi.fetchTelemetry(region.lat, region.lng, null).catch(() => null);
+      if (tel && tel.metrics) {
+        place = { ...region, metrics: tel.metrics, nasaFire: false, source: tel.source, isCurrent: false };
+      }
+    }
+
+    const snapshot = buildTelemetrySnapshot(place);
+    const systemPrompt = buildSciencePrompt(snapshot.text, place);
+    const sourcePrefix = place.isCurrent ? '' : `📍 ${place.name} • `;
+
+    const result = await runCosmoModels(models, aiChatHistory, systemPrompt);
+
+    if (result.ok) {
+      aiChatHistory.push({ role: 'model', parts: result.parts });
+      trimCosmoHistory();
+      setAiEngineBadge('✨ Gemini Bağlı', '#34D399');
+      return { text: result.text, source: `${sourcePrefix}✨ Google Gemini • ${result.model}` };
+    }
+
+    aiChatHistory.pop();
+    setAiEngineBadge('📡 Yerel Mod', '#F59E0B');
+    const local = generateSmartFallback(userPrompt, place.metrics, snapshot.air, snapshot.fire, snapshot.light, place.name);
+    if (result.fatal) {
+      return { text: `${result.message}\n\nBu arada yerel analiz:\n\n${local}`, source: '⚠️ Motor Hatası' };
+    }
+    return { text: local, source: `${sourcePrefix}📡 Yerel Analiz` };
+  }
+
+  function generateSmartFallback(prompt, m, airInfo, fireInfo, lightInfo, placeName = state.locationName) {
     const q = prompt.toLowerCase();
-    if (/^(selam|merhaba|hi|hello|hallo|bonjour|ahoj)\b/.test(q)) {
-      return `Merhaba! 👋 Ben **AeroAI**. Şu an **${state.locationName}** için NASA POWER, EONET ve VIIRS verilerini takip ediyorum. Hava, yangın, ışık kirliliği veya sesler hakkında sorabilirsin!`;
+    if (isGreetingOnly(prompt)) {
+      return greetingFallback();
     }
     if (/(kimsin|who are you|wer bist|qui es|kdo jsi)/.test(q)) {
-      return `Ben **AeroAI**, NASA Space Apps 2026 AeroJukebox projesinin yapay zeka asistanıyım. Verileri bilimsel olarak yorumlar ve sonifikasyonu açıklarım.`;
+      return `Ben **Cosmo AI**, NASA Space Apps 2026 AeroJukebox projesinin yapay zeka asistanıyım. Verileri bilimsel olarak yorumlar ve sonifikasyonu açıklarım.`;
     }
     if (/(ses|müzik|akor|nota|sound|music|audio)/.test(q)) {
       const tag = state.mode === 'fire' ? fireInfo.synthTag : state.mode === 'light' ? lightInfo.synthTag : airInfo.synthTag;
-      return `🎵 **Akustik & Sonifikasyon Analizi (${state.locationName}):**\n• **Aktif Profil:** \`${tag}\`\n• Ses motoru şu an **Compressor + 2.2x Boost** ile çalışıyor. Temiz havada ve karanlık gökyüzünde kristal arp/çanlar; kirlilikte derin sub-bas; yangında odun çıtırtıları; ışık kirliliğinde ise 60Hz şehir neon uğultusu üretilir.`;
+      return `🎵 **Akustik & Sonifikasyon Analizi (${placeName}):**\n• **Aktif Profil:** \`${tag}\`\n• Ses motoru şu an **Compressor + 2.2x Boost** ile çalışıyor. Temiz havada ve karanlık gökyüzünde kristal arp/çanlar; kirlilikte derin sub-bas; yangında odun çıtırtıları; ışık kirliliğinde ise 60Hz şehir neon uğultusu üretilir.`;
     }
     if (/(sağlık|spor|maske|health|outdoor)/.test(q)) {
-      return `🫁 **Sağlık & Yaşam Önerisi (${state.locationName}):**\n• AQI **${m.aqi}** (${airInfo.label}), Güneş Işınımı **${m.solar} kWh/m²**, Işık Kirliliği **Bortle ${lightInfo.bortle}**.\n• ${m.aqi <= 50 ? 'Açık hava egzersizi için ideal.' : 'Hassas gruplar dışarıda ağır efordan kaçınmalı.'} ${lightInfo.bortle >= 7 ? 'Yüksek gece ışığı uyku ritmini etkileyebilir.' : ''}`;
+      return `🫁 **Sağlık & Yaşam Önerisi (${placeName}):**\n• AQI **${m.aqi}** (${airInfo.label}), Güneş Işınımı **${m.solar} kWh/m²**, Işık Kirliliği **Bortle ${lightInfo.bortle}**.\n• ${m.aqi <= 50 ? 'Açık hava egzersizi için ideal.' : 'Hassas gruplar dışarıda ağır efordan kaçınmalı.'} ${lightInfo.bortle >= 7 ? 'Yüksek gece ışığı uyku ritmini etkileyebilir.' : ''}`;
     }
     if (/(tarif|yemek|maç|futbol|fıkra|matematik|recipe|football)/.test(q)) {
-      return `🛡️ Ben **AeroAI**; yalnızca Dünya bilimleri, NASA uydu verileri, hava/yangın/ışık kirliliği ve sonifikasyon konularında yanıt veririm.`;
+      return `🛡️ Ben **Cosmo AI**; yalnızca Dünya bilimleri, NASA uydu verileri, hava/yangın/ışık kirliliği ve sonifikasyon konularında yanıt veririm.`;
     }
     if (state.mode === 'light') {
-      return `🌌 **Işık Kirliliği Analizi (${state.locationName}):**\n• **Bortle Sınıfı:** ${lightInfo.bortle}/9 (**%${lightInfo.percent}** - ${lightInfo.status})\n• **NASA VIIRS Etkisi:** ${lightInfo.desc}`;
+      return `🌌 **Işık Kirliliği Analizi (${placeName}):**\n• **Bortle Sınıfı:** ${lightInfo.bortle}/9 (**%${lightInfo.percent}** - ${lightInfo.status})\n• **NASA VIIRS Etkisi:** ${lightInfo.desc}`;
     }
     if (state.mode === 'fire') {
-      return `🔥 **Yangın & NASA EONET Analizi (${state.locationName}):**\n• **Yangın Riski:** %${fireInfo.risk} (${fireInfo.status})\n• **NASA Işınım & İklim:** Güneş Işınımı **${m.solar} kWh/m²**, Sıcaklık **${m.temp}°C**, Nem **%${m.hum}**.`;
+      return `🔥 **Yangın & NASA EONET Analizi (${placeName}):**\n• **Yangın Riski:** %${fireInfo.risk} (${fireInfo.status})\n• **NASA Işınım & İklim:** Güneş Işınımı **${m.solar} kWh/m²**, Sıcaklık **${m.temp}°C**, Nem **%${m.hum}**.`;
     }
-    return `🌫️ **Atmosfer Analizi (${state.locationName}):**\n• **AQI:** ${m.aqi} (${airInfo.label}) | PM2.5: **${m.pm25}**, NO₂: **${m.no2}**, O₃: **${m.o3}** µg/m³ | NASA Solar: **${m.solar} kWh/m²**.`;
+    return `🌫️ **Atmosfer Analizi (${placeName}):**\n• **AQI:** ${m.aqi} (${airInfo.label}) | PM2.5: **${m.pm25}**, NO₂: **${m.no2}**, O₃: **${m.o3}** µg/m³ | NASA Solar: **${m.solar} kWh/m²**.`;
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderAiMarkdown(text) {
+    return escapeHtml(text)
+      .replace(/\r\n/g, '\n')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/^#{1,6}\s*(.+)$/gm, '<strong>$1</strong>')
+      .replace(/^\s*[-*]\s+/gm, '• ')
+      .replace(/\n/g, '<br>');
   }
 
   function appendAiMessage(role, text, sourceTag = '') {
     if (!dom.aiChatBox) return;
     const msg = document.createElement('div');
     msg.className = `ai-message ${role}`;
-    msg.innerHTML = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`(.*?)`/g, '<code>$1</code>').replace(/\n/g, '<br>')
-      + (sourceTag ? `<div class="ai-source-tag">${sourceTag}</div>` : '');
+    msg.innerHTML = renderAiMarkdown(text)
+      + (sourceTag ? `<div class="ai-source-tag">${escapeHtml(sourceTag)}</div>` : '');
     dom.aiChatBox.appendChild(msg);
     dom.aiChatBox.scrollTop = dom.aiChatBox.scrollHeight;
+    return msg;
   }
 
   async function handleAiSubmit(e) {
     if (e) e.preventDefault();
+    if (cosmoBusy) return;
+
     const q = dom.aiInput.value.trim();
     if (!q) return;
-    appendAiMessage('user', q);
+
+    cosmoBusy = true;
     dom.aiInput.value = '';
+    dom.aiInput.disabled = true;
+    appendAiMessage('user', q);
+
     const loader = document.createElement('div');
     loader.className = 'ai-message bot loading';
-    loader.textContent = 'AeroAI NASA verilerini analiz ediyor...';
+    loader.innerHTML = '<img class="cosmo-thinking-figure" src="assets/cosmo-thinking.png" alt="" aria-hidden="true" /><span>Cosmo AI NASA telemetrisini analiz ediyor...</span>';
     dom.aiChatBox.appendChild(loader);
     dom.aiChatBox.scrollTop = dom.aiChatBox.scrollHeight;
-    const res = await callGeminiAI(q);
-    loader.remove();
-    appendAiMessage('bot', res.text, res.source);
+    setCosmoMood('thinking');
+
+    try {
+      const res = await callCosmoAI(q, message => {
+        const label = loader.querySelector('span');
+        if (label) label.textContent = message;
+      });
+      loader.remove();
+      appendAiMessage('bot', res.text, res.source);
+    } catch (err) {
+      loader.remove();
+      appendAiMessage('bot', '⚠️ Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.', '⚠️ Hata');
+    } finally {
+      cosmoBusy = false;
+      setCosmoMood('happy');
+      dom.aiInput.disabled = false;
+      dom.aiInput.focus();
+    }
+  }
+
+  const COSMO_MOOD_SRC = {
+    happy: 'assets/cosmo-happy.png',
+    thinking: 'assets/cosmo-thinking.png'
+  };
+
+  function setCosmoMood(mood) {
+    const mascot = document.getElementById('cosmoMascot');
+    if (mascot && COSMO_MOOD_SRC[mood]) mascot.src = COSMO_MOOD_SRC[mood];
+  }
+
+  function openAiModal() {
+    if (!dom.aiModal) return;
+    dom.aiModal.classList.remove('hidden');
+    setTimeout(() => { if (dom.aiInput) dom.aiInput.focus(); }, 60);
+  }
+
+  function closeAiModal() {
+    if (dom.aiModal) dom.aiModal.classList.add('hidden');
+    hideCosmoWidget();
+  }
+
+  function updateCosmoBubble() {
+    const bubbleText = document.getElementById('cosmoBubbleText');
+    if (!bubbleText) return;
+    const m = state.activeMetrics;
+    const modeLabel = state.mode === 'fire' ? 'Yangın Riski' : state.mode === 'light' ? 'Işık Kirliliği' : 'Hava Kalitesi';
+    bubbleText.innerHTML = '<strong>Cosmo AI</strong><span>' + escapeHtml(
+      `${state.locationName} • ${modeLabel}: AQI ${m.aqi}. Detaylı analiz için bana tıkla!`
+    ) + '</span>';
+  }
+
+  function hideCosmoWidget() {
+    const widget = document.getElementById('cosmoFloatingWidget');
+    if (widget) widget.classList.add('cosmo-widget-hidden');
+  }
+
+  function bindCosmoWidget() {
+    const trigger = document.getElementById('cosmoCircleTrigger');
+    const bubble = document.getElementById('cosmoSpeechBubble');
+    const closeBtn = document.getElementById('cosmoCloseBtn');
+    if (trigger) trigger.addEventListener('click', openAiModal);
+    if (bubble) {
+      bubble.addEventListener('click', event => {
+        if (closeBtn && closeBtn.contains(event.target)) return;
+        openAiModal();
+      });
+    }
+    if (closeBtn) {
+      closeBtn.addEventListener('click', event => {
+        event.stopPropagation();
+        hideCosmoWidget();
+      });
+    }
+    updateCosmoBubble();
   }
 
   function mainLoop() {
@@ -691,27 +1124,14 @@ ${snapshot}`;
     dom.langSelect.addEventListener('change', e => applyLanguage(e.target.value));
     dom.themeToggleBtn.addEventListener('click', toggleTheme);
 
-    updateAiKeyUI();
-    if (dom.aiToggleBtn) dom.aiToggleBtn.addEventListener('click', () => { updateAiKeyUI(); dom.aiModal.classList.remove('hidden'); });
-    if (dom.closeAiBtn) dom.closeAiBtn.addEventListener('click', () => dom.aiModal.classList.add('hidden'));
-    if (dom.aiKeyBtn && dom.aiKeyPanel) {
-      dom.aiKeyBtn.addEventListener('click', () => {
-        dom.aiKeyPanel.classList.toggle('hidden');
-        if (!dom.aiKeyPanel.classList.contains('hidden')) { dom.aiKeyInput.value = getActiveGeminiKey(); dom.aiKeyInput.focus(); }
-      });
-    }
-    if (dom.aiKeySaveBtn && dom.aiKeyInput) {
-      dom.aiKeySaveBtn.addEventListener('click', () => {
-        const k = dom.aiKeyInput.value.trim();
-        try { localStorage.setItem('aero_gemini_key', k); } catch {}
-        updateAiKeyUI();
-        appendAiMessage('bot', k ? '✅ Google Gemini API anahtarı kaydedildi!' : 'API anahtarı temizlendi.');
-      });
-    }
+    if (dom.aiToggleBtn) dom.aiToggleBtn.addEventListener('click', openAiModal);
+    if (dom.closeAiBtn) dom.closeAiBtn.addEventListener('click', closeAiModal);
     if (dom.aiChatForm) dom.aiChatForm.addEventListener('submit', handleAiSubmit);
+    bindCosmoWidget();
 
     document.querySelectorAll('.ai-chip').forEach(chip => {
       chip.addEventListener('click', () => {
+        if (cosmoBusy) return;
         const type = chip.dataset.prompt;
         const pMap = {
           air: `${state.locationName} (${state.mode}) için NASA ve atmosfer verilerine göre detaylı analiz yap.`,
@@ -817,7 +1237,7 @@ ${snapshot}`;
       else if (e.code === 'ArrowLeft') dom.prevStationBtn.click();
       else if (e.code === 'Escape') {
         dom.shortcutsModal.classList.add('hidden');
-        if (dom.aiModal) dom.aiModal.classList.add('hidden');
+        closeAiModal();
         if (window.AeroTour) window.AeroTour.end();
       }
     });
@@ -857,4 +1277,3 @@ ${snapshot}`;
 
   document.addEventListener('DOMContentLoaded', bootstrap);
 })();
-
