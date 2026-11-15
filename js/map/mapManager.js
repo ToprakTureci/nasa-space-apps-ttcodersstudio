@@ -1,29 +1,27 @@
-/**
- * AeroJukebox — Çift Katmanlı Atmosferik ve Termal Uydu Harita Yöneticisi
- * - Hava Modu: NASA EIC / Troposferik Kimya ve Aerosol Uydu Katmanı
- * - Yangın Modu: NASA FIRMS Termal Kızılötesi Yangın Uydu Katmanı
- */
 (() => {
   'use strict';
 
   class MapManager {
-    constructor(mapContainerId, onSelectCoord, onSelectStation) {
+    constructor(mapContainerId, onSelectCoord, onSelectStation, onSelectFire) {
+      this.mapContainerId = mapContainerId || 'worldMap';
       this.map = null;
       this.radarMarker = null;
-      this.currentLayer = null;
+      this.baseLayer = null;
       this.labelsLayer = null;
-      this.atmosphereGlow = null;
+      this.lightLayer = null;
+      this.fireLayerGroup = null;
       this.currentMode = 'air';
       this.currentTheme = 'dark';
       this.stations = [];
+      this.wildfires = [];
       this.onSelectCoord = onSelectCoord;
       this.onSelectStation = onSelectStation;
+      this.onSelectFire = onSelectFire;
     }
 
     init(lat, lng, stations) {
       this.stations = stations || [];
-
-      this.map = L.map('worldMap', {
+      this.map = L.map(this.mapContainerId, {
         center: [lat, lng],
         zoom: 4,
         minZoom: 2,
@@ -32,25 +30,22 @@
         worldCopyJump: true
       });
 
+      this.fireLayerGroup = L.layerGroup().addTo(this.map);
       this.updateLayer();
 
-      // Referans İstasyon Pinleri ve Atmosferik Işıma Halkaları
+      // Referans İstasyon Pinleri
       this.stations.forEach(st => {
-        const pinIcon = L.divIcon({
-          className: '',
-          iconSize: [20, 20],
-          iconAnchor: [10, 10],
-          html: `
-            <div class="telemetry-pin-wrap">
-              <div class="pin-halo"></div>
-              <div class="station-pin"></div>
-            </div>
-          `
-        });
+        const pin = L.marker([st.lat, st.lng], {
+          icon: L.divIcon({
+            className: '',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8],
+            html: '<div class="station-pin"></div>'
+          })
+        }).addTo(this.map);
 
-        const pin = L.marker([st.lat, st.lng], { icon: pinIcon }).addTo(this.map);
         pin.bindTooltip(st.name, { direction: 'top', className: 'telemetry-tooltip' });
-        pin.on('click', (e) => {
+        pin.on('click', e => {
           L.DomEvent.stopPropagation(e);
           if (this.onSelectStation) this.onSelectStation(st.id);
         });
@@ -60,21 +55,14 @@
       this.radarMarker = L.marker([lat, lng], {
         icon: L.divIcon({
           className: '',
-          iconSize: [48, 48],
-          iconAnchor: [24, 24],
-          html: `
-            <div class="radar-marker-wrapper">
-              <div class="radar-ring"></div>
-              <div class="radar-crosshair"></div>
-              <div class="radar-core"></div>
-            </div>
-          `
+          iconSize: [44, 44],
+          iconAnchor: [22, 22],
+          html: '<div class="radar-marker-wrapper"><div class="radar-ring"></div><div class="radar-core"></div></div>'
         }),
         interactive: false,
         zIndexOffset: 600
       }).addTo(this.map);
 
-      // Koordinat Tıklama Dinleyicisi
       this.map.on('click', e => {
         const clat = Math.min(85, Math.max(-85, e.latlng.lat));
         const clng = ((((e.latlng.lng + 180) % 360) + 360) % 360) - 180;
@@ -82,9 +70,36 @@
       });
     }
 
+    setWildfires(fires) {
+      this.wildfires = fires || [];
+      this.renderWildfireMarkers();
+    }
+
+    renderWildfireMarkers() {
+      if (!this.fireLayerGroup) return;
+      this.fireLayerGroup.clearLayers();
+      if (this.currentMode !== 'fire') return;
+
+      this.wildfires.forEach(f => {
+        const icon = L.divIcon({
+          className: '',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+          html: '<div class="nasa-fire-pin" title="NASA EONET Active Wildfire">🔥</div>'
+        });
+        const m = L.marker([f.lat, f.lng], { icon }).addTo(this.fireLayerGroup);
+        m.bindTooltip(`NASA EONET: ${f.title}`, { direction: 'top', className: 'telemetry-tooltip' });
+        m.on('click', e => {
+          L.DomEvent.stopPropagation(e);
+          if (this.onSelectFire) this.onSelectFire(f);
+        });
+      });
+    }
+
     setMapMode(mode) {
       this.currentMode = mode;
       this.updateLayer();
+      this.renderWildfireMarkers();
     }
 
     setTheme(theme) {
@@ -94,44 +109,50 @@
 
     updateLayer() {
       if (!this.map) return;
-
-      if (this.currentLayer) this.map.removeLayer(this.currentLayer);
+      if (this.baseLayer) this.map.removeLayer(this.baseLayer);
       if (this.labelsLayer) this.map.removeLayer(this.labelsLayer);
-
-      if (this.currentMode === 'fire') {
-        // YANGIN MODU: Koyu Kızıl / Termal Kızılötesi Uydu
-        this.currentLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-          maxZoom: 16,
-          className: 'map-tiles-fire',
-          attribution: '&copy; Esri &mdash; NASA FIRMS Thermal'
-        }).addTo(this.map);
-      } else {
-        // HAVA KALİTESİ MODU: NASA EIC / Troposferik Atmosfer ve Aerosol Uydusu
-        if (this.currentTheme === 'light') {
-          // Açık Temada: Temiz Laboratuvar Topografyası
-          this.currentLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 16,
-            attribution: '&copy; Esri &mdash; NASA EIC'
-          }).addTo(this.map);
-        } else {
-          // Koyu Temada: Gerçek Uydu Görüntüsü + Atmosferik Okyanus/Aerosol Spektrum Filtresi
-          this.currentLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 16,
-            className: 'map-tiles-air',
-            attribution: '&copy; Esri &mdash; NASA EIC Atmosphere'
-          }).addTo(this.map);
-        }
+      if (this.lightLayer) {
+        this.map.removeLayer(this.lightLayer);
+        this.lightLayer = null;
       }
 
-      // Şehir ve Sınır Etiket Katmanı (Her iki modda da okunaklı şeffaf etiketler)
-      const labelUrl = this.currentTheme === 'light'
+      // Işık kirliliği modunda gece ışıkları net görünsün diye taban her zaman koyu tutulur
+      const isLightTheme = this.currentTheme === 'light' && this.currentMode !== 'light';
+
+      const baseTileUrl = isLightTheme
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+        : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+
+      const labelTileUrl = isLightTheme
         ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}'
         : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
 
-      this.labelsLayer = L.tileLayer(labelUrl, {
+      const tileClass = this.currentMode === 'fire' ? 'map-single-color-fire' : 'map-single-color-clean';
+
+      this.baseLayer = L.tileLayer(baseTileUrl, {
         maxZoom: 16,
-        zIndex: 500,
-        className: 'map-labels-telemetry'
+        className: tileClass,
+        attribution: '&copy; Esri &mdash; NASA EIC'
+      }).addTo(this.map);
+
+      // IŞIK KİRLİLİĞİ MODU: RESMİ NASA GIBS VIIRS BLACK MARBLE GECE IŞIKLARI
+      if (this.currentMode === 'light') {
+        this.lightLayer = L.tileLayer(
+          'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_CityLights_2012/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',
+          {
+            maxNativeZoom: 8,
+            maxZoom: 16,
+            zIndex: 350,
+            className: 'map-tiles-nightlights',
+            attribution: '&copy; NASA GIBS VIIRS Black Marble'
+          }
+        ).addTo(this.map);
+      }
+
+      this.labelsLayer = L.tileLayer(labelTileUrl, {
+        maxZoom: 16,
+        zIndex: 450,
+        className: 'map-labels-clean'
       }).addTo(this.map);
     }
 
