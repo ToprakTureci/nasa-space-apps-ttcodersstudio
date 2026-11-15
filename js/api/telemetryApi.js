@@ -1,3 +1,6 @@
+/**
+ * AeroJukebox — NASA POWER, NASA EONET Aktif Yangınlar, Open-Meteo & Işık Kirliliği Modeli
+ */
 (() => {
   'use strict';
 
