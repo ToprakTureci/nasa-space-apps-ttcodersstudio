@@ -47,9 +47,9 @@ NASA’s Earth Information Center (EIC) produces remarkable visualizations track
 | **Wildfire (FWI ≥ 50%)** | Burning branches & rising embers | F-Minor tension drone + layered wood crackles |
 | **Light (Bortle 1–3 vs 7–9)** | Starry night vs urban skyglow | Starlight harp vs 60 Hz city neon hum |
 
-### 4. 🤖 AeroAI (Google Gemini Telemetry Assistant)
+### 4. 🤖 CosmoAI (Google Gemini Telemetry Assistant)
 - Injects live coordinates, all 8 sensor metrics, active radar mode, and tree stage directly into the AI prompt context.
-- Supports multi-turn conversation memory, strictly filters out off-topic queries, and includes a smart intent-aware offline analysis fallback when no API key is entered.
+- Supports multi-turn conversation memory, strictly filters out off-topic queries, and includes a smart intent-aware offline analysis fallback when API key not working.
 
 ### 5. ⏳ 1750–2026 Historical Simulator & Universal Accessibility
 - **Historical Comparison:** Compares live 2026 satellite measurements against a pre-industrial 1750 baseline using an exponential anthropogenic emission curve.
@@ -81,3 +81,7 @@ aerojukebox/
 └── assets/
     ├── nasa.jpg                # Splash screen NASA Space Apps logo
     └── ttcs.jpg                # Splash screen team logo
+    └── cosmo-happy.png         #   cosmoai model
+    └── cosmo-thinking.png      #   cosmoai model
+    └── cosmo-head.png          #   cosmoai head icon
+    └── cosmo.svg               #   cosmoai icon
