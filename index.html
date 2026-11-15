@@ -4,13 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>AeroJukebox | NASA Space Apps Challenge 2026</title>
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="icon" type="image/png" href="assets/cosmo-head.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="css/style.css" />
 
+  <!-- MODÜLER SCRIPTLER -->
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script defer src="js/tree/particleSystem.js"></script>
   <script defer src="js/tree/treeRenderer.js"></script>
@@ -21,6 +23,7 @@
   <script defer src="js/app.js"></script>
 </head>
 <body>
+  <!-- 1. GİRİŞTE YÜKLENİYOR (SPLASH) EKRANI -->
   <div id="splashScreen" class="splash-screen" role="dialog" aria-modal="true" aria-label="Yükleniyor">
     <div class="splash-content">
       <div class="splash-logos">
@@ -48,20 +51,23 @@
   <div id="ariaLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <div class="app-shell">
+    <!-- ÜST HEADER -->
     <header class="top-header" role="banner">
       <div class="header-left">
         <div class="brand-lockup">
           <svg class="brand-logo" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-            <circle cx="20" cy="20" r="18" stroke="#1E2D45" stroke-width="1.5" />
-            <circle cx="20" cy="20" r="13" stroke="#0B3D91" stroke-width="1.5" stroke-dasharray="4 3" />
-            <circle cx="20" cy="20" r="7" fill="#0B3D91" fill-opacity="0.35" stroke="#00D2FF" stroke-width="1.5" />
-            <path d="M9 20H13L15.5 14L19 26L22.5 11L25.5 23L28 20H31" stroke="#00D2FF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="20" cy="20" r="18" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" />
+            <circle cx="20" cy="20" r="13" stroke="#3B82F6" stroke-width="1.5" stroke-dasharray="4 3" />
+            <circle cx="20" cy="20" r="7" fill="#3B82F6" fill-opacity="0.2" stroke="#34D399" stroke-width="1.5" />
+            <path d="M9 20H13L15.5 14L19 26L22.5 11L25.5 23L28 20H31" stroke="#3B82F6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
           <div class="brand-text">
             <span class="brand-title">AeroJukebox</span>
             <span class="brand-subtitle">NASA SPACE APPS 2026</span>
           </div>
         </div>
+
+        <!-- 3 FARKLI VERİ HARİTASI MODU -->
         <div class="mode-switch-group" role="group" aria-label="Harita Modu">
           <button id="modeAirBtn" class="mode-btn active" type="button" aria-pressed="true">
             <span>🌫️</span> <span data-i18n="airMode">Hava Kalitesi</span>
@@ -74,44 +80,71 @@
           </button>
         </div>
       </div>
-      <form id="searchForm" class="header-search" role="search" aria-label="Şehir Arama">
-        <input id="citySearchInput" type="search" placeholder="Şehir ara (ör. Denizli, Paris)..." autocomplete="off" />
-        <button type="submit" aria-label="Ara">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+
+      <!-- MERKEZ: ŞEHİR ARAMA + COSMOAI BUTONU (KORUNDU) -->
+      <div class="header-search-cluster">
+        <form id="searchForm" class="header-search" role="search" aria-label="Şehir Arama">
+          <svg class="search-leading-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <input id="citySearchInput" type="search" placeholder="Şehir ara (ör. Denizli, Paris)..." autocomplete="off" />
+          <button type="submit" class="search-submit-btn" aria-label="Ara">↵</button>
+        </form>
+
+        <button id="aiToggleBtn" class="ai-launch-btn" type="button" title="Cosmo AI Telemetri Asistanı">
+          <span class="ai-pulse" aria-hidden="true"></span>
+          <img class="ai-launch-avatar" src="assets/cosmo-head.png" alt="" aria-hidden="true" />
+          <span data-i18n="aiBtn">Cosmo AI</span>
         </button>
-      </form>
+      </div>
+
+      <!-- SAĞ ARAÇLAR (GHOST BUTONLAR) -->
       <div class="header-right">
-        <button id="aiToggleBtn" class="ai-launch-btn" type="button" title="Google Gemini AI Telemetri Asistanı">
-          <span class="ai-pulse"></span><span>🤖</span><strong data-i18n="aiBtn">AeroAI</strong>
+        <button id="tourStartBtn" class="ghost-btn" type="button" title="Nasıl Kullanılır? (H)">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M9.75 9.25C9.75 8.01 10.76 7 12 7C13.24 7 14.25 8.01 14.25 9.25C14.25 10.35 13.46 11.12 12.63 11.6C12.22 11.84 12 12.2 12 12.65V13.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <circle cx="12" cy="16.5" r="1" fill="currentColor"/>
+          </svg>
+          <span class="tour-btn-text" data-i18n="tourBtn">Rehber</span>
         </button>
-        <button id="tourStartBtn" class="tour-launch-btn" type="button" title="Nasıl Kullanılır? (H)">
-          <span>❓</span><strong class="tour-btn-text" data-i18n="tourBtn">Rehber</strong>
-        </button>
+
         <div class="lang-select-wrapper">
           <label for="langSelect" class="sr-only">Dil</label>
           <select id="langSelect" class="lang-select" aria-label="Dil Seçimi">
-            <option value="tr">TR - Türkçe</option>
-            <option value="en">EN - English</option>
-            <option value="de">DE - Deutsch</option>
-            <option value="fr">FR - Français</option>
-            <option value="cs">CS - Čeština</option>
+            <option value="tr">TR</option>
+            <option value="en">EN</option>
+            <option value="de">DE</option>
+            <option value="fr">FR</option>
+            <option value="cs">CS</option>
           </select>
         </div>
-        <button id="themeToggleBtn" class="voice-toggle icon-only" type="button" aria-pressed="false" title="Açık/Koyu Tema">
+
+        <button id="themeToggleBtn" class="ghost-btn icon-only" type="button" aria-pressed="false" title="Açık/Koyu Tema">
           <span id="themeIcon">☀️</span>
         </button>
-        <button id="voiceToggleBtn" class="voice-toggle" type="button" aria-pressed="false" title="Sesli Rehber (V)">
-          <svg class="icon-sm" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M15.54 8.46C16.48 9.4 17 10.67 17 12C17 13.33 16.48 14.6 15.54 15.53" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+
+        <button id="voiceToggleBtn" class="ghost-btn voice-toggle" type="button" aria-pressed="false" title="Sesli Rehber (V)">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+            <path d="M15.54 8.46C16.48 9.4 17 10.67 17 12C17 13.33 16.48 14.6 15.54 15.53" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
           <span class="hide-mobile"><span data-i18n="voiceLabel">Sesli</span>: <strong id="voiceToggleState">Kapalı</strong></span>
         </button>
+
+        <div class="header-divider" aria-hidden="true"></div>
+
         <nav class="header-nav" role="tablist">
           <button id="tabMonitor" class="nav-tab active" role="tab" aria-selected="true" aria-controls="monitorView" data-i18n="tabMonitor">Monitör</button>
           <button id="tabTeam" class="nav-tab" role="tab" aria-selected="false" aria-controls="teamView" data-i18n="tabTeam">Ekip</button>
         </nav>
       </div>
     </header>
+
+    <!-- ANA TELEMETRİ ALANI -->
     <main class="main-container">
       <section id="monitorView" class="telemetry-workspace" role="tabpanel" aria-labelledby="tabMonitor">
+        <!-- SOL: HARİTA VE ZAMAN ÇİZELGESİ -->
         <section class="panel map-panel" aria-label="Harita">
           <div class="panel-header">
             <div class="panel-title-group">
@@ -120,6 +153,7 @@
             </div>
             <div class="map-hud-coords" id="mapCoordReadout">37.7765° N, 29.0864° E</div>
           </div>
+
           <div class="map-viewport-wrapper">
             <div id="worldMap" class="world-map"></div>
             <div class="map-overlay-hint">
@@ -132,6 +166,7 @@
               <button id="resetMapBtn" class="map-ctrl-btn" type="button" title="Sıfırla">⟲</button>
             </div>
           </div>
+
           <div class="map-footer-controls">
             <div class="timeline-module">
               <div class="timeline-header">
@@ -157,6 +192,7 @@
                 <button type="button" class="era-tick active" data-year="2026">2026</button>
               </div>
             </div>
+
             <div class="station-presets">
               <span class="presets-label" data-i18n="referenceStations">REFERANS İSTASYONLAR</span>
               <div class="presets-row">
@@ -169,6 +205,8 @@
             </div>
           </div>
         </section>
+
+        <!-- SAĞ: BİYOSFER AĞACI VE 8 NASA METRİK KARTI -->
         <section class="panel biosphere-panel" aria-label="Telemetri Verileri">
           <div class="location-telemetry-header">
             <div class="location-meta">
@@ -179,6 +217,7 @@
               <h1 id="locationName" class="location-title">Denizli, Türkiye</h1>
               <div id="locationCoords" class="location-coords">37.7765° N, 29.0864° E</div>
             </div>
+
             <div class="aqi-readout-card" id="aqiCard">
               <div id="mainMetricLabel" class="aqi-top-label" data-i18n="mainAqiLabel">HAVA KALİTESİ (AQI)</div>
               <div class="aqi-main-row">
@@ -189,6 +228,7 @@
               <div id="aqiSubMetric" class="aqi-submetric">European AQI: --</div>
             </div>
           </div>
+
           <div id="biosphereStage" class="biosphere-stage">
             <div class="biosphere-hud-overlay">
               <span id="biosphereStageLabel" class="biosphere-badge">EVRE 1 // DENGELİ BİYOSFER</span>
@@ -196,6 +236,8 @@
             </div>
             <canvas id="biosphereCanvas" class="biosphere-canvas"></canvas>
           </div>
+
+          <!-- 8'Lİ METRİK KARTLARI -->
           <div class="telemetry-cards-grid">
             <article class="metric-card"><div class="metric-header"><span class="metric-symbol">PM2.5</span><span class="metric-name" data-i18n="mPm25">İnce Partikül</span></div><div class="metric-value-row"><span id="valPm25" class="metric-value">--</span><span class="metric-unit">µg/m³</span></div><div class="metric-bar-track"><div id="barPm25" class="metric-bar-fill"></div></div></article>
             <article class="metric-card"><div class="metric-header"><span class="metric-symbol">PM10</span><span class="metric-name" data-i18n="mPm10">Kaba Partikül</span></div><div class="metric-value-row"><span id="valPm10" class="metric-value">--</span><span class="metric-unit">µg/m³</span></div><div class="metric-bar-track"><div id="barPm10" class="metric-bar-fill"></div></div></article>
@@ -208,6 +250,8 @@
           </div>
         </section>
       </section>
+
+      <!-- EKİP SEKMESİ (5 DİLDE TAM ÇEVRİLİR) -->
       <section id="teamView" class="team-overlay hidden" role="tabpanel" aria-labelledby="tabTeam">
         <div class="team-container">
           <div class="team-header-block">
@@ -218,6 +262,7 @@
             <h1 class="team-heading" data-i18n="teamHeading">AeroJukebox Geliştirici Ekibi</h1>
             <p class="team-lead" data-i18n="teamLead">Gerçek zamanlı NASA uydu telemetrisini çok duyulu ekosistem simülasyonuna ve Web Audio sonifikasyonuna dönüştürmek üzere geliştirilmiştir.</p>
           </div>
+
           <div class="team-grid">
             <article class="team-card"><div class="team-card-index">SYS // 01</div><h2 class="member-name">Toprak Türeci</h2><p class="member-role" data-i18n="m1Role">Yazılım Geliştirici &amp; Sistem Mimarisi</p><p class="member-desc" data-i18n="m1Desc">Gerçek zamanlı Open-Meteo &amp; NASA veri boru hattı ve çekirdek uygulama mimarisi.</p></article>
             <article class="team-card"><div class="team-card-index">GUI // 02</div><h2 class="member-name">Eymen Kozal</h2><p class="member-role" data-i18n="m2Role">GUI Planlayıcı &amp; Arayüz Tasarımcısı</p><p class="member-desc" data-i18n="m2Desc">Uzay telemetri arayüzü tasarımı ve dinamik Biyosfer Ağacı görsel sistemi.</p></article>
@@ -225,6 +270,7 @@
             <article class="team-card"><div class="team-card-index">SCI // 04</div><h2 class="member-name">Defne Kayrakçı</h2><p class="member-role" data-i18n="m4Role">Proje Sunumu &amp; Bilimsel İçerik</p><p class="member-desc" data-i18n="m4Desc">Atmosferik kirletici eşiklerinin kurgulanması ve bilimsel anlatım.</p></article>
             <article class="team-card"><div class="team-card-index">TECH // 05</div><h2 class="member-name">Umut Coşkun</h2><p class="member-role" data-i18n="m5Role">Yazılım &amp; Teknik</p><p class="member-desc" data-i18n="m5Desc">Yazılım mimarisi, telemetri veri optimizasyonu ve teknik entegrasyon.</p></article>
           </div>
+
           <div class="sources-panel">
             <h3 class="sources-title" data-i18n="refTitle">BİLİMSEL VERİ VE NASA UYDU KAYNAKLARI</h3>
             <div class="sources-grid">
@@ -237,65 +283,95 @@
         </div>
       </section>
     </main>
+
+    <!-- ALT JUKEBOX BARI -->
     <footer class="jukebox-bar" role="region" aria-label="Ses Konsolu">
       <div class="jukebox-left">
-        <button id="prevStationBtn" class="jb-icon-btn" type="button" title="Önceki">◀</button>
-        <button id="playPauseBtn" class="jb-play-btn" type="button"><span id="playIcon">▶</span><span id="playBtnLabel" data-i18n="playBtn">SESİ BAŞLAT</span></button>
-        <button id="nextStationBtn" class="jb-icon-btn" type="button" title="Sonraki">▶</button>
-        <button id="randomLocBtn" class="jb-random-btn" type="button"><span data-i18n="randomBtn">Rastgele Konum</span></button>
+        <button id="prevStationBtn" class="jb-icon-btn" type="button" title="Önceki" aria-label="Önceki istasyon">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 20L9 12L19 4V20Z" fill="currentColor"/><path d="M5 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+
+        <button id="playPauseBtn" class="jb-play-btn" type="button">
+          <span id="playIcon" class="play-icon-glyph" aria-hidden="true">▶</span>
+          <span id="playBtnLabel" data-i18n="playBtn">SESİ BAŞLAT</span>
+          <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+        </button>
+
+        <button id="nextStationBtn" class="jb-icon-btn" type="button" title="Sonraki" aria-label="Sonraki istasyon">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4L15 12L5 20V4Z" fill="currentColor"/><path d="M19 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+
+        <button id="randomLocBtn" class="jb-random-btn" type="button">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M16 3H21V8M4 20L21 3M21 16V21H16M15 15L21 21M4 4L9 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span data-i18n="randomBtn">Rastgele Konum</span>
+        </button>
       </div>
+
       <div class="jukebox-center">
         <div class="jukebox-display">
-          <div class="jb-track-info"><span id="jukeboxTitle" class="jb-title">Denizli, Türkiye</span><span id="jukeboxStatus" class="jb-status">--</span></div>
+          <div class="jb-track-info">
+            <span id="jukeboxTitle" class="jb-title">Denizli, Türkiye</span>
+            <span id="jukeboxStatus" class="jb-status">--</span>
+          </div>
           <div id="sonificationModeText" class="jb-synth-tag">STANDBY</div>
         </div>
-        <div class="visualizer-frame"><canvas id="visualizerCanvas"></canvas></div>
+        <div class="visualizer-frame">
+          <canvas id="visualizerCanvas"></canvas>
+        </div>
       </div>
+
       <div class="jukebox-right">
         <div class="volume-control">
-          <button id="muteBtn" class="jb-icon-btn sm" type="button">🔊</button>
-          <input id="volumeSlider" class="volume-slider" type="range" min="0" max="100" value="85" />
+          <button id="muteBtn" class="jb-icon-btn sm" type="button" aria-label="Sesi kapat">🔊</button>
+          <input id="volumeSlider" class="volume-slider" type="range" min="0" max="100" value="85" aria-label="Ses düzeyi" />
           <span id="volumeValue" class="volume-val">85%</span>
         </div>
-        <button id="shortcutsBtn" class="jb-icon-btn sm" type="button" title="Kısayollar">⌨</button>
+        <button id="shortcutsBtn" class="jb-icon-btn sm" type="button" title="Kısayollar" aria-label="Klavye kısayolları">⌨</button>
       </div>
     </footer>
   </div>
+
+  <!-- COSMOAI GEMINI MODAL -->
   <div id="aiModal" class="ai-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
     <div class="ai-modal-card">
       <div class="ai-modal-header">
         <div class="ai-header-left">
-          <span class="ai-avatar">🤖</span>
+          <div class="ai-avatar cosmo-avatar-frame">
+            <img class="cosmo-portrait" src="assets/cosmo-head.png" alt="Cosmo AI" onerror="this.onerror=null; this.src='assets/cosmo.svg';" />
+          </div>
           <div>
-            <h2 id="aiModalTitle" class="ai-title">AeroAI // NASA Veri Asistanı</h2>
-            <p class="ai-subtitle">Google Gemini AI • <span id="aiEngineBadge">API Anahtarı Bekleniyor</span></p>
+            <h2 id="aiModalTitle" class="ai-title">Cosmo AI // NASA Telemetri Asistanı</h2>
+            <p class="ai-subtitle">Gemini Motoru • <span id="aiEngineBadge">✨ Gemini Bağlı</span></p>
           </div>
         </div>
         <div class="ai-header-right">
-          <button id="aiKeyBtn" class="ai-icon-btn" type="button" title="Gemini API Anahtarı">🔑</button>
           <button id="closeAiBtn" class="close-team-btn" type="button">✕</button>
         </div>
       </div>
-      <div id="aiKeyPanel" class="ai-key-panel">
-        <input id="aiKeyInput" type="password" placeholder="Google Gemini API Key (AIzaSy...) yapıştırın" autocomplete="off" />
-        <button id="aiKeySaveBtn" type="button">Kaydet</button>
-      </div>
+
       <div class="ai-quick-prompts">
         <button type="button" class="ai-chip" data-prompt="air" data-i18n="aiChipAir">🌫️ Detaylı Durum Analizi</button>
         <button type="button" class="ai-chip" data-prompt="sound" data-i18n="aiChipSound">🎵 Müzik &amp; Sonifikasyon Analizi</button>
         <button type="button" class="ai-chip" data-prompt="health" data-i18n="aiChipHealth">🫁 Sağlık &amp; Yaşam Tavsiyesi</button>
       </div>
+
       <div id="aiChatBox" class="ai-chat-box">
         <div class="ai-message bot">
-          Merhaba! Ben <strong>AeroAI</strong>. Seçtiğin bölgenin NASA uydu verilerini, ışık kirliliğini, aktif yangınları ve sonifikasyon seslerini derinlemesine analiz edebilirim!
+          <img class="cosmo-greeting-figure" src="assets/cosmo-happy.png" alt="Cosmo AI" />
+          Merhaba! Ben <strong>Cosmo AI</strong>. Benimle sohbet edebilir, seçili bölgenin veya merak ettiğin herhangi bir şehrin NASA uydu verilerini, yangın riskini ve sonifikasyon seslerini sorabilirsin!
         </div>
       </div>
+
       <form id="aiChatForm" class="ai-input-bar">
-        <input id="aiInput" type="text" placeholder="Hava, yangın, ışık kirliliği veya sesler hakkında sor..." autocomplete="off" />
+        <input id="aiInput" type="text" placeholder="Bir şehir sor (ör. Tokyo nasıl?) veya sohbet et..." autocomplete="off" />
         <button type="submit" id="aiSendBtn" aria-label="Gönder">➤</button>
       </form>
     </div>
   </div>
+
+  <!-- KISAYOLLAR MODALI -->
   <div id="shortcutsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
     <div class="modal-card">
       <div class="modal-header">
@@ -312,6 +388,20 @@
         <div class="shortcut-row"><kbd>H</kbd><span data-i18n="scTour">İnteraktif Rehberi Başlat</span></div>
       </div>
     </div>
+  </div>
+
+  <!-- ANA EKRAN COSMO AI YÜZEN BALONCUK -->
+  <div id="cosmoFloatingWidget" class="cosmo-floating-widget" role="complementary" aria-label="Cosmo AI Asistan">
+    <div id="cosmoSpeechBubble" class="cosmo-speech-bubble">
+      <button id="cosmoCloseBtn" class="cosmo-close-btn" type="button" aria-label="Baloncuğu kapat" title="Kapat">✕</button>
+      <div id="cosmoBubbleText" class="cosmo-bubble-text">
+        <strong>Cosmo AI</strong>
+        <span>Detaylı analizler için bana soru sorabilirsin!</span>
+      </div>
+    </div>
+    <button id="cosmoCircleTrigger" class="cosmo-mascot-btn" type="button" aria-label="Cosmo AI Sohbeti Aç" title="Cosmo AI ile konuş">
+      <img id="cosmoMascot" src="assets/cosmo-happy.png" alt="Cosmo AI" onerror="this.onerror=null; this.src='assets/cosmo.svg';" />
+    </button>
   </div>
 </body>
 </html>
