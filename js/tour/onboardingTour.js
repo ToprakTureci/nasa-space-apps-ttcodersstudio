@@ -1,7 +1,3 @@
-/**
- * AeroJukebox — İnteraktif Spotlight Başlangıç Rehberi (Onboarding Tour)
- * 5 Dilde (TR, EN, DE, FR, CS) 3 Radar Modunu ve tüm panelleri aydınlatıp tanıtır.
- */
 (() => {
   'use strict';
 
