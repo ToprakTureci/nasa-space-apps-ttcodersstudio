@@ -5,6 +5,7 @@
     constructor() {
       this.simHealth = 1.0;
       this.animTime = 0;
+      this._fi = 0; // yaprak dokusu sayacı (kare başına sıfırlanır -> titremez)
       this.stars = Array.from({ length: 75 }, (_, i) => ({
         nx: Math.abs(Math.sin(i * 19.31) * 43758.5) % 1,
         ny: (Math.abs(Math.cos(i * 7.13) * 19381.2) % 1) * 0.72,
@@ -20,6 +21,11 @@
       const g = Math.round(this.lerp(c1[1], c2[1], t));
       const b = Math.round(this.lerp(c1[2], c2[2], t));
       return `rgb(${r},${g},${b})`;
+    }
+
+    rnd() {
+      const s = Math.sin(this._fi++ * 12.9898 + 78.233) * 43758.5453;
+      return s - Math.floor(s);
     }
 
     drawVolumetricFoliage(ctx, ox, oy, baseRadius, health, isNightMode) {
@@ -55,6 +61,27 @@
       ctx.arc(ox + r * 0.2, oy - r * 0.2, r * 0.65, 0, Math.PI * 2);
       ctx.fill();
 
+      const leaves = Math.round(this.lerp(3, 9, health));
+      for (let k = 0; k < leaves; k++) {
+        const a = this.rnd() * Math.PI * 2;
+        const d = Math.sqrt(this.rnd()) * r * 0.95;
+        const lx = ox + Math.cos(a) * d;
+        const ly = oy + Math.sin(a) * d;
+        const lr = r * (0.12 + this.rnd() * 0.12);
+        const lit = ly < oy - r * 0.1 || lx > ox + r * 0.2;
+        ctx.fillStyle = lit
+          ? `rgba(${cLight[0]},${cLight[1]},${cLight[2]},0.55)`
+          : `rgba(${cDark[0]},${cDark[1]},${cDark[2]},0.45)`;
+        ctx.beginPath();
+        ctx.ellipse(lx, ly, lr * 1.4, lr, a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = 'rgba(0,0,0,0.16)';
+      ctx.beginPath();
+      ctx.arc(ox - r * 0.1, oy + r * 0.55, r * 0.6, 0, Math.PI);
+      ctx.fill();
+
       if (!isNightMode && health > 0.85) {
         ctx.fillStyle = '#FEF08A';
         ctx.beginPath();
@@ -80,6 +107,15 @@
       const curve = (depth % 2 === 0 ? 1 : -1) * (len * 0.08);
       ctx.quadraticCurveTo(curve, -len * 0.5, 0, -len);
       ctx.stroke();
+
+      if (width > 3 && !isBurning) {
+        ctx.strokeStyle = isNightMode ? 'rgba(120,140,160,0.14)' : 'rgba(255,230,190,0.16)';
+        ctx.lineWidth = Math.max(1, width * 0.22);
+        ctx.beginPath();
+        ctx.moveTo(width * 0.22, -len * 0.04);
+        ctx.quadraticCurveTo(curve + width * 0.22, -len * 0.5, width * 0.12, -len * 0.96);
+        ctx.stroke();
+      }
 
       if (depth >= 3 && !isBurning && !isNightMode) {
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
@@ -116,11 +152,29 @@
       ctx.restore();
     }
 
+    drawHills(ctx, w, h, colorFar, colorNear) {
+      const layer = (base, amp, freq, phase, color) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        for (let x = 0; x <= w; x += 12) {
+          ctx.lineTo(x, base + Math.sin(x * freq + phase) * amp + Math.sin(x * freq * 2.3 + phase * 1.7) * amp * 0.4);
+        }
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fill();
+      };
+      layer(h * 0.66, 12, 0.012, 1.2, colorFar);
+      layer(h * 0.74, 9, 0.018, 4.1, colorNear);
+    }
+
     render(ctx, w, h, mode, stage, fireRisk, bortle, reduceMotion) {
       if (!reduceMotion) this.animTime += 0.024;
+      this._fi = 0;
       const isFire = mode === 'fire';
       const isLight = mode === 'light';
       const isBurning = isFire && fireRisk >= 50;
+      const isAir = !isFire && !isLight;
 
       const sky = ctx.createLinearGradient(0, 0, 0, h);
       if (isLight) {
@@ -140,6 +194,35 @@
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, w, h);
 
+      if (isAir && this.simHealth > 0.25) {
+        const sx = w * 0.8, sy = h * 0.2;
+        const sun = ctx.createRadialGradient(sx, sy, 2, sx, sy, w * 0.45);
+        sun.addColorStop(0, `rgba(255, 244, 200, ${0.55 * this.simHealth})`);
+        sun.addColorStop(0.25, `rgba(255, 225, 150, ${0.2 * this.simHealth})`);
+        sun.addColorStop(1, 'rgba(255, 220, 140, 0)');
+        ctx.fillStyle = sun;
+        ctx.fillRect(0, 0, w, h);
+
+        if (this.simHealth > 0.6) {
+          ctx.save();
+          ctx.translate(sx, sy);
+          for (let i = 0; i < 5; i++) {
+            const a = 1.6 + i * 0.28 + Math.sin(this.animTime * 0.4 + i) * 0.04;
+            const g = ctx.createLinearGradient(0, 0, Math.cos(a) * h, Math.sin(a) * h);
+            g.addColorStop(0, `rgba(255, 240, 190, ${0.1 * this.simHealth})`);
+            g.addColorStop(1, 'rgba(255, 240, 190, 0)');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(a - 0.05) * h * 1.2, Math.sin(a - 0.05) * h * 1.2);
+            ctx.lineTo(Math.cos(a + 0.05) * h * 1.2, Math.sin(a + 0.05) * h * 1.2);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+
       if (isLight) {
         const starVisibility = Math.max(0, 1 - (bortle - 1) / 6.5);
         if (starVisibility > 0.05) {
@@ -150,6 +233,18 @@
             ctx.arc(s.nx * w, s.ny * h, s.r, 0, Math.PI * 2);
             ctx.fill();
           });
+          if (bortle <= 3) {
+            ctx.save();
+            ctx.translate(w * 0.4, h * 0.3);
+            ctx.rotate(-0.5);
+            const mw = ctx.createLinearGradient(0, -h * 0.12, 0, h * 0.12);
+            mw.addColorStop(0, 'rgba(180,190,255,0)');
+            mw.addColorStop(0.5, `rgba(190,200,255,${0.1 * starVisibility})`);
+            mw.addColorStop(1, 'rgba(180,190,255,0)');
+            ctx.fillStyle = mw;
+            ctx.fillRect(-w, -h * 0.12, w * 2, h * 0.24);
+            ctx.restore();
+          }
         }
         if (bortle >= 4) {
           const glareAlpha = ((bortle - 3) / 6) * 0.45;
@@ -160,6 +255,10 @@
           ctx.fillRect(0, 0, w, h);
         }
       }
+
+      if (isLight) this.drawHills(ctx, w, h, 'rgba(8,24,22,0.9)', 'rgba(6,18,16,0.95)');
+      else if (isFire) this.drawHills(ctx, w, h, isBurning ? 'rgba(48,20,12,0.9)' : 'rgba(40,36,38,0.85)', isBurning ? 'rgba(32,14,9,0.95)' : 'rgba(30,26,26,0.95)');
+      else this.drawHills(ctx, w, h, this.mixRGB([46, 52, 62], [38, 96, 120], this.simHealth), this.mixRGB([34, 40, 48], [28, 90, 80], this.simHealth));
 
       const hillGrad = ctx.createLinearGradient(0, h - 50, 0, h);
       if (isLight) {
@@ -173,6 +272,11 @@
       ctx.fillStyle = hillGrad;
       ctx.beginPath();
       ctx.ellipse(w / 2, h + 10, w * 0.72, 54, 0, Math.PI, 0);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.beginPath();
+      ctx.ellipse(w / 2 + 14, h - 30, 62, 7, 0, 0, Math.PI * 2);
       ctx.fill();
 
       const sway = reduceMotion ? 0 : Math.sin(this.animTime) * (isBurning ? 1.3 : (0.35 + (isLight ? 0.6 : this.simHealth) * 0.65));
@@ -190,6 +294,28 @@
 
       this.drawBranch(ctx, 72, 0, 16, 4, sway, isBurning, isLight);
       ctx.restore();
+
+      if (isAir) {
+        const dirty = 1 - this.simHealth;
+        const fogA = 0.08 + dirty * 0.38;
+        const fog = ctx.createLinearGradient(0, h * 0.45, 0, h);
+        fog.addColorStop(0, 'rgba(150,140,130,0)');
+        fog.addColorStop(1, `rgba(${Math.round(this.lerp(210, 120, dirty))},${Math.round(this.lerp(230, 105, dirty))},${Math.round(this.lerp(235, 95, dirty))},${fogA})`);
+        ctx.fillStyle = fog;
+        ctx.fillRect(0, h * 0.45, w, h * 0.55);
+      } else if (isLight && bortle <= 3) {
+        const fog = ctx.createLinearGradient(0, h * 0.7, 0, h);
+        fog.addColorStop(0, 'rgba(120,160,180,0)');
+        fog.addColorStop(1, 'rgba(120,160,180,0.12)');
+        ctx.fillStyle = fog;
+        ctx.fillRect(0, h * 0.7, w, h * 0.3);
+      } else if (isFire) {
+        const smoke = ctx.createLinearGradient(0, 0, 0, h * 0.6);
+        smoke.addColorStop(0, `rgba(30,22,20,${0.1 + (fireRisk / 100) * 0.35})`);
+        smoke.addColorStop(1, 'rgba(30,22,20,0)');
+        ctx.fillStyle = smoke;
+        ctx.fillRect(0, 0, w, h * 0.6);
+      }
     }
   }
 
