@@ -513,6 +513,9 @@
     renderTelemetry();
   }
 
+  // =========================================================
+  // GEMINI AI ASİSTANI (HAFIZALI & 3 MODU DA DESTEKLER)
+  // =========================================================
   const aiChatHistory = [];
 
   function getActiveGeminiKey() {
@@ -854,3 +857,4 @@ ${snapshot}`;
 
   document.addEventListener('DOMContentLoaded', bootstrap);
 })();
+
