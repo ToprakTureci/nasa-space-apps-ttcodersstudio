@@ -1,3 +1,7 @@
+/**
+ * AeroJukebox — 3 Modlu Harita Yöneticisi (Hava, NASA EONET Yangın, NASA GIBS Işık Kirliliği)
+ * API anahtarı gerektirmeyen sade tek renk altlık üzerine resmi NASA katmanları.
+ */
 (() => {
   'use strict';
 
