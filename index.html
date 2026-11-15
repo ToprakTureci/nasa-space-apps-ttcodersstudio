@@ -11,13 +11,14 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="css/style.css" />
 
-  <!-- SCRIPTLER -->
+  <!-- MODÜLER SCRIPTLER -->
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script defer src="js/tree/particleSystem.js"></script>
   <script defer src="js/tree/treeRenderer.js"></script>
   <script defer src="js/audio/audioEngine.js"></script>
   <script defer src="js/api/telemetryApi.js"></script>
   <script defer src="js/map/mapManager.js"></script>
+  <script defer src="js/tour/onboardingTour.js"></script>
   <script defer src="js/app.js"></script>
 </head>
 <body>
@@ -37,19 +38,19 @@
       </div>
       <div class="splash-text-lockup">
         <h1 class="splash-title">AeroJukebox</h1>
-        <p class="splash-subtitle">EARTH INFORMATION CENTER // TELEMETRY</p>
+        <p class="splash-subtitle">EARTH INFORMATION CENTER // NASA TELEMETRY</p>
       </div>
       <div class="splash-progress-track">
         <div id="splashProgressBar" class="splash-progress-bar"></div>
       </div>
-      <div id="splashStatusText" class="splash-status">UYDU SİSTEMLERİ BAĞLANIYOR...</div>
+      <div id="splashStatusText" class="splash-status">NASA UYDU VERİLERİ BAĞLANIYOR...</div>
     </div>
   </div>
 
   <div id="ariaLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <div class="app-shell">
-    <!-- ÜST HEADER: DİL, TEMA, ARAMA, MODLAR -->
+    <!-- ÜST HEADER -->
     <header class="top-header" role="banner">
       <div class="header-left">
         <div class="brand-lockup">
@@ -65,20 +66,21 @@
           </div>
         </div>
 
-        <!-- 2 HARİTA MODU -->
+        <!-- 3 FARKLI VERİ HARİTASI MODU -->
         <div class="mode-switch-group" role="group" aria-label="Harita Modu">
           <button id="modeAirBtn" class="mode-btn active" type="button" aria-pressed="true">
-            <span class="mode-icon">🌫️</span>
-            <span data-i18n="airMode">Hava Kalitesi</span>
+            <span>🌫️</span> <span data-i18n="airMode">Hava Kalitesi</span>
           </button>
           <button id="modeFireBtn" class="mode-btn" type="button" aria-pressed="false">
-            <span class="mode-icon">🔥</span>
-            <span data-i18n="fireMode">Yangın Riski</span>
+            <span>🔥</span> <span data-i18n="fireMode">Yangın Riski</span>
+          </button>
+          <button id="modeLightBtn" class="mode-btn" type="button" aria-pressed="false">
+            <span>🌌</span> <span data-i18n="lightMode">Işık Kirliliği</span>
           </button>
         </div>
       </div>
 
-      <!-- ŞEHİR ARAMA FORMU -->
+      <!-- ŞEHİR ARAMA -->
       <form id="searchForm" class="header-search" role="search" aria-label="Şehir Arama">
         <input id="citySearchInput" type="search" placeholder="Şehir ara (ör. Denizli, Paris)..." autocomplete="off" />
         <button type="submit" aria-label="Ara">
@@ -86,11 +88,21 @@
         </button>
       </form>
 
-      <!-- DİL, TEMA, SES VE EKİP BUTONLARI -->
+      <!-- SAĞ ARAÇLAR -->
       <div class="header-right">
+        <!-- GOOGLE GEMINI AI BUTONU -->
+        <button id="aiToggleBtn" class="ai-launch-btn" type="button" title="Google Gemini AI Telemetri Asistanı">
+          <span class="ai-pulse"></span><span>🤖</span><strong data-i18n="aiBtn">AeroAI</strong>
+        </button>
+
+        <!-- REHBER BUTONU -->
+        <button id="tourStartBtn" class="tour-launch-btn" type="button" title="Nasıl Kullanılır? (H)">
+          <span>❓</span><strong class="tour-btn-text" data-i18n="tourBtn">Rehber</strong>
+        </button>
+
         <!-- 5 DİL SEÇİCİ -->
         <div class="lang-select-wrapper">
-          <label for="langSelect" class="sr-only">Dil Seçin</label>
+          <label for="langSelect" class="sr-only">Dil</label>
           <select id="langSelect" class="lang-select" aria-label="Dil Seçimi">
             <option value="tr">TR - Türkçe</option>
             <option value="en">EN - English</option>
@@ -100,20 +112,18 @@
           </select>
         </div>
 
-        <!-- AÇIK / KOYU TEMA BUTONU -->
+        <!-- TEMA BUTONU -->
         <button id="themeToggleBtn" class="voice-toggle icon-only" type="button" aria-pressed="false" title="Açık/Koyu Tema">
           <span id="themeIcon">☀️</span>
         </button>
 
         <!-- SESLİ OKUMA -->
-        <button id="voiceToggleBtn" class="voice-toggle" type="button" aria-pressed="false" title="Sesli Rehber (Kısayol: V)">
-          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 11.995C17.0039 13.3208 16.4774 14.5924 15.54 15.53" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+        <button id="voiceToggleBtn" class="voice-toggle" type="button" aria-pressed="false" title="Sesli Rehber (V)">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M15.54 8.46C16.48 9.4 17 10.67 17 12C17 13.33 16.48 14.6 15.54 15.53" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
           <span class="hide-mobile"><span data-i18n="voiceLabel">Sesli</span>: <strong id="voiceToggleState">Kapalı</strong></span>
         </button>
 
+        <!-- SEKMELER -->
         <nav class="header-nav" role="tablist">
           <button id="tabMonitor" class="nav-tab active" role="tab" aria-selected="true" aria-controls="monitorView" data-i18n="tabMonitor">Monitör</button>
           <button id="tabTeam" class="nav-tab" role="tab" aria-selected="false" aria-controls="teamView" data-i18n="tabTeam">Ekip</button>
@@ -124,7 +134,7 @@
     <!-- ANA TELEMETRİ ALANI -->
     <main class="main-container">
       <section id="monitorView" class="telemetry-workspace" role="tabpanel" aria-labelledby="tabMonitor">
-        <!-- SOL: HARİTA VE TARİHSEL ÇİZELGE -->
+        <!-- SOL: HARİTA VE ZAMAN ÇİZELGESİ -->
         <section class="panel map-panel" aria-label="Harita">
           <div class="panel-header">
             <div class="panel-title-group">
@@ -138,9 +148,8 @@
             <div id="worldMap" class="world-map"></div>
             <div class="map-overlay-hint">
               <span class="pulse-dot"></span>
-              <span id="mapHintText" data-i18n="mapHint">Anlık telemetri için haritaya tıklayın</span>
+              <span id="mapHintText" data-i18n="mapHint">Anlık NASA + uydu telemetrisi için tıklayın</span>
             </div>
-
             <div class="custom-zoom-controls">
               <button id="zoomInBtn" class="map-ctrl-btn" type="button" title="Yakınlaştır">+</button>
               <button id="zoomOutBtn" class="map-ctrl-btn" type="button" title="Uzaklaştır">−</button>
@@ -187,12 +196,12 @@
           </div>
         </section>
 
-        <!-- SAĞ: BİYOSFER AĞACI VE 8 METRİK KARTI -->
+        <!-- SAĞ: BİYOSFER AĞACI VE 8 NASA METRİK KARTI -->
         <section class="panel biosphere-panel" aria-label="Telemetri Verileri">
           <div class="location-telemetry-header">
             <div class="location-meta">
               <div class="source-row">
-                <span id="dataSourceBadge" class="source-badge">CANLI UYDU BAĞLANTISI</span>
+                <span id="dataSourceBadge" class="source-badge">NASA + OPEN-METEO</span>
                 <span id="locationRegion" class="region-tag">GÖZLEM NOKTASI</span>
               </div>
               <h1 id="locationName" class="location-title">Denizli, Türkiye</h1>
@@ -224,7 +233,7 @@
             <article class="metric-card"><div class="metric-header"><span class="metric-symbol">PM10</span><span class="metric-name" data-i18n="mPm10">Kaba Partikül</span></div><div class="metric-value-row"><span id="valPm10" class="metric-value">--</span><span class="metric-unit">µg/m³</span></div><div class="metric-bar-track"><div id="barPm10" class="metric-bar-fill"></div></div></article>
             <article class="metric-card"><div class="metric-header"><span class="metric-symbol">NO₂</span><span class="metric-name" data-i18n="mNo2">Azot Dioksit</span></div><div class="metric-value-row"><span id="valNo2" class="metric-value">--</span><span class="metric-unit">µg/m³</span></div><div class="metric-bar-track"><div id="barNo2" class="metric-bar-fill"></div></div></article>
             <article class="metric-card"><div class="metric-header"><span class="metric-symbol">O₃</span><span class="metric-name" data-i18n="mO3">Ozon</span></div><div class="metric-value-row"><span id="valO3" class="metric-value">--</span><span class="metric-unit">µg/m³</span></div><div class="metric-bar-track"><div id="barO3" class="metric-bar-fill"></div></div></article>
-            <article class="metric-card"><div class="metric-header"><span class="metric-symbol">SO₂</span><span class="metric-name" data-i18n="mSo2">Kükürt Dioksit</span></div><div class="metric-value-row"><span id="valSo2" class="metric-value">--</span><span class="metric-unit">µg/m³</span></div><div class="metric-bar-track"><div id="barSo2" class="metric-bar-fill"></div></div></article>
+            <article class="metric-card"><div class="metric-header"><span class="metric-symbol">SOLAR</span><span class="metric-name" data-i18n="mSolar">NASA Işınım</span></div><div class="metric-value-row"><span id="valSolar" class="metric-value">--</span><span class="metric-unit">kWh/m²</span></div><div class="metric-bar-track"><div id="barSolar" class="metric-bar-fill"></div></div></article>
             <article class="metric-card"><div class="metric-header"><span class="metric-symbol">CO</span><span class="metric-name" data-i18n="mCo">Karbonmonoksit</span></div><div class="metric-value-row"><span id="valCo" class="metric-value">--</span><span class="metric-unit">µg/m³</span></div><div class="metric-bar-track"><div id="barCo" class="metric-bar-fill"></div></div></article>
             <article class="metric-card"><div class="metric-header"><span class="metric-symbol">TEMP</span><span class="metric-name" data-i18n="mTemp">Sıcaklık</span></div><div class="metric-value-row"><span id="valTemp" class="metric-value">--</span><span class="metric-unit">°C</span></div><div class="metric-bar-track"><div id="barTemp" class="metric-bar-fill"></div></div></article>
             <article class="metric-card"><div class="metric-header"><span class="metric-symbol">HUM</span><span class="metric-name" data-i18n="mHum">Bağıl Nem</span></div><div class="metric-value-row"><span id="valHum" class="metric-value">--</span><span class="metric-unit">%</span></div><div class="metric-bar-track"><div id="barHum" class="metric-bar-fill"></div></div></article>
@@ -232,36 +241,33 @@
         </section>
       </section>
 
-      <!-- EKİP SEKMESİ (GÜNCELLENDİ: UMUT COŞKUN EKLENDİ) -->
+      <!-- EKİP SEKMESİ (5 DİLDE TAM ÇEVRİLİR) -->
       <section id="teamView" class="team-overlay hidden" role="tabpanel" aria-labelledby="tabTeam">
         <div class="team-container">
           <div class="team-header-block">
             <div class="team-header-top">
-              <span class="telemetry-tag">NASA SPACE APPS CHALLENGE 2026 // DENİZLİ</span>
+              <span class="telemetry-tag" data-i18n="teamTag">NASA SPACE APPS CHALLENGE 2026 // DENİZLİ</span>
               <button id="closeTeamBtn" class="close-team-btn" type="button" data-i18n="closeTeamBtn">Monitöre Dön ✕</button>
             </div>
             <h1 class="team-heading" data-i18n="teamHeading">AeroJukebox Geliştirici Ekibi</h1>
-            <p class="team-lead" data-i18n="teamLead">
-              Gerçek zamanlı uydu telemetrisini çok duyulu ekosistem simülasyonuna ve Web Audio sonifikasyonuna dönüştürmek üzere geliştirilmiştir.
-            </p>
+            <p class="team-lead" data-i18n="teamLead">Gerçek zamanlı NASA uydu telemetrisini çok duyulu ekosistem simülasyonuna ve Web Audio sonifikasyonuna dönüştürmek üzere geliştirilmiştir.</p>
           </div>
 
           <div class="team-grid">
-            <article class="team-card"><div class="team-card-index">SYS // 01</div><h2 class="member-name">Toprak Türeci</h2><p class="member-role">Yazılım Geliştirici &amp; Sistem Mimarisi</p><p class="member-desc">Gerçek zamanlı Open-Meteo veri boru hattı, çevrimdışı telemetri sigortası ve çekirdek uygulama mimarisi.</p></article>
-            <article class="team-card"><div class="team-card-index">GUI // 02</div><h2 class="member-name">Eymen Kozal</h2><p class="member-role">GUI Planlayıcı &amp; Arayüz Tasarımcısı</p><p class="member-desc">Uzay telemetri arayüzü tasarımı, 3 bölgeli veri hiyerarşisi ve dinamik Biyosfer Ağacı görsel sistemi.</p></article>
-            <article class="team-card"><div class="team-card-index">AUD // 03</div><h2 class="member-name">Yağmur Yumukoğlu</h2><p class="member-role">Ses Sorumlusu &amp; Sonification Tasarımı</p><p class="member-desc">Web Audio API tabanlı harmonik akor sentezi, partikül parazit modülasyonu ve ses manzarası mühendisliği.</p></article>
-            <article class="team-card"><div class="team-card-index">SCI // 04</div><h2 class="member-name">Defne Kayrakçı</h2><p class="member-role">Proje Sunumu &amp; Bilimsel İçerik</p><p class="member-desc">Atmosferik kirletici eşiklerinin kurgulanması, tarihsel iklim referans modeli ve bilimsel anlatım.</p></article>
-            <!-- GÜNCELLENEN ÜYE: UMUT COŞKUN -->
-            <article class="team-card"><div class="team-card-index">TECH // 05</div><h2 class="member-name">Umut Coşkun</h2><p class="member-role">Yazılım &amp; Teknik</p><p class="member-desc">Yazılım mimarisi, telemetri veri optimizasyonu, donanım uyumluluğu ve teknik entegrasyon.</p></article>
+            <article class="team-card"><div class="team-card-index">SYS // 01</div><h2 class="member-name">Toprak Türeci</h2><p class="member-role" data-i18n="m1Role">Yazılım Geliştirici &amp; Sistem Mimarisi</p><p class="member-desc" data-i18n="m1Desc">Gerçek zamanlı Open-Meteo &amp; NASA veri boru hattı ve çekirdek uygulama mimarisi.</p></article>
+            <article class="team-card"><div class="team-card-index">GUI // 02</div><h2 class="member-name">Eymen Kozal</h2><p class="member-role" data-i18n="m2Role">GUI Planlayıcı &amp; Arayüz Tasarımcısı</p><p class="member-desc" data-i18n="m2Desc">Uzay telemetri arayüzü tasarımı ve dinamik Biyosfer Ağacı görsel sistemi.</p></article>
+            <article class="team-card"><div class="team-card-index">AUD // 03</div><h2 class="member-name">Yağmur Yumukoğlu</h2><p class="member-role" data-i18n="m3Role">Ses Sorumlusu &amp; Sonification Tasarımı</p><p class="member-desc" data-i18n="m3Desc">Web Audio API harmonik akor sentezi ve ses manzarası mühendisliği.</p></article>
+            <article class="team-card"><div class="team-card-index">SCI // 04</div><h2 class="member-name">Defne Kayrakçı</h2><p class="member-role" data-i18n="m4Role">Proje Sunumu &amp; Bilimsel İçerik</p><p class="member-desc" data-i18n="m4Desc">Atmosferik kirletici eşiklerinin kurgulanması ve bilimsel anlatım.</p></article>
+            <article class="team-card"><div class="team-card-index">TECH // 05</div><h2 class="member-name">Umut Coşkun</h2><p class="member-role" data-i18n="m5Role">Yazılım &amp; Teknik</p><p class="member-desc" data-i18n="m5Desc">Yazılım mimarisi, telemetri veri optimizasyonu ve teknik entegrasyon.</p></article>
           </div>
 
           <div class="sources-panel">
-            <h3 class="sources-title" data-i18n="refTitle">BİLİMSEL VERİ VE UYDU KAYNAKLARI</h3>
+            <h3 class="sources-title" data-i18n="refTitle">BİLİMSEL VERİ VE NASA UYDU KAYNAKLARI</h3>
             <div class="sources-grid">
-              <div class="source-item"><span class="source-code">NASA FIRMS</span><span class="source-name">Fire Information for Resource Management</span><span class="source-detail">Termal sıcak nokta anomalileri ve orman yangını tehlike izleme</span></div>
-              <div class="source-item"><span class="source-code">NASA EIC</span><span class="source-name">NASA Earth Information Center</span><span class="source-detail">Küresel çevresel telemetri ve erişilebilir veri sonifikasyon standartları</span></div>
-              <div class="source-item"><span class="source-code">TEMPO</span><span class="source-name">NASA TEMPO Mission</span><span class="source-detail">Troposferik Emisyonlar: NO₂, O₃ ve aerosol kirliliği izleme</span></div>
-              <div class="source-item"><span class="source-code">CAMS / API</span><span class="source-name">Open-Meteo Air Quality &amp; Weather API</span><span class="source-detail">Gerçek zamanlı PM2.5, PM10, SO₂, CO, sıcaklık ve nem veri entegrasyonu</span></div>
+              <div class="source-item"><span class="source-code">NASA EONET</span><span class="source-name">NASA Natural Event Tracker</span><span class="source-detail" data-i18n="src1Detail">Gerçek zamanlı aktif küresel orman yangını olay verileri</span></div>
+              <div class="source-item"><span class="source-code">NASA GIBS</span><span class="source-name">VIIRS Black Marble Night Lights</span><span class="source-detail" data-i18n="src2Detail">NASA Suomi NPP uydusu gece ışık kirliliği katmanı</span></div>
+              <div class="source-item"><span class="source-code">NASA POWER</span><span class="source-name">NASA Langley Research Center</span><span class="source-detail" data-i18n="src3Detail">Uydu güneş radyasyonu, yüzey sıcaklığı ve iklim verileri</span></div>
+              <div class="source-item"><span class="source-code">CAMS / API</span><span class="source-name">Open-Meteo Air Quality &amp; Weather</span><span class="source-detail" data-i18n="src4Detail">Gerçek zamanlı PM2.5, PM10, NO₂, O₃, CO ve nem verileri</span></div>
             </div>
           </div>
         </div>
@@ -271,9 +277,9 @@
     <!-- ALT JUKEBOX BARI -->
     <footer class="jukebox-bar" role="region" aria-label="Ses Konsolu">
       <div class="jukebox-left">
-        <button id="prevStationBtn" class="jb-icon-btn" type="button" title="Önceki İstasyon">◀</button>
+        <button id="prevStationBtn" class="jb-icon-btn" type="button" title="Önceki">◀</button>
         <button id="playPauseBtn" class="jb-play-btn" type="button"><span id="playIcon">▶</span><span id="playBtnLabel" data-i18n="playBtn">SESİ BAŞLAT</span></button>
-        <button id="nextStationBtn" class="jb-icon-btn" type="button" title="Sonraki İstasyon">▶</button>
+        <button id="nextStationBtn" class="jb-icon-btn" type="button" title="Sonraki">▶</button>
         <button id="randomLocBtn" class="jb-random-btn" type="button"><span data-i18n="randomBtn">Rastgele Konum</span></button>
       </div>
 
@@ -288,12 +294,53 @@
       <div class="jukebox-right">
         <div class="volume-control">
           <button id="muteBtn" class="jb-icon-btn sm" type="button">🔊</button>
-          <input id="volumeSlider" class="volume-slider" type="range" min="0" max="100" value="72" />
-          <span id="volumeValue" class="volume-val">72%</span>
+          <input id="volumeSlider" class="volume-slider" type="range" min="0" max="100" value="85" />
+          <span id="volumeValue" class="volume-val">85%</span>
         </div>
         <button id="shortcutsBtn" class="jb-icon-btn sm" type="button" title="Kısayollar">⌨</button>
       </div>
     </footer>
+  </div>
+
+  <!-- GEMINI AI MODAL -->
+  <div id="aiModal" class="ai-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+    <div class="ai-modal-card">
+      <div class="ai-modal-header">
+        <div class="ai-header-left">
+          <span class="ai-avatar">🤖</span>
+          <div>
+            <h2 id="aiModalTitle" class="ai-title">AeroAI // NASA Telemetri Asistanı</h2>
+            <p class="ai-subtitle">Google Gemini AI • <span id="aiEngineBadge">API Anahtarı Bekleniyor</span></p>
+          </div>
+        </div>
+        <div class="ai-header-right">
+          <button id="aiKeyBtn" class="ai-icon-btn" type="button" title="Gemini API Anahtarı">🔑</button>
+          <button id="closeAiBtn" class="close-team-btn" type="button">✕</button>
+        </div>
+      </div>
+
+      <div id="aiKeyPanel" class="ai-key-panel">
+        <input id="aiKeyInput" type="password" placeholder="Google Gemini API Key (AIzaSy...) yapıştırın" autocomplete="off" />
+        <button id="aiKeySaveBtn" type="button">Kaydet</button>
+      </div>
+
+      <div class="ai-quick-prompts">
+        <button type="button" class="ai-chip" data-prompt="air" data-i18n="aiChipAir">🌫️ Detaylı Durum Analizi</button>
+        <button type="button" class="ai-chip" data-prompt="sound" data-i18n="aiChipSound">🎵 Müzik &amp; Sonifikasyon Analizi</button>
+        <button type="button" class="ai-chip" data-prompt="health" data-i18n="aiChipHealth">🫁 Sağlık &amp; Yaşam Tavsiyesi</button>
+      </div>
+
+      <div id="aiChatBox" class="ai-chat-box">
+        <div class="ai-message bot">
+          Merhaba! Ben <strong>AeroAI</strong>. Seçtiğin bölgenin NASA uydu verilerini, ışık kirliliğini, aktif yangınları ve sonifikasyon seslerini derinlemesine analiz edebilirim!
+        </div>
+      </div>
+
+      <form id="aiChatForm" class="ai-input-bar">
+        <input id="aiInput" type="text" placeholder="Hava, yangın, ışık kirliliği veya sesler hakkında sor..." autocomplete="off" />
+        <button type="submit" id="aiSendBtn" aria-label="Gönder">➤</button>
+      </form>
+    </div>
   </div>
 
   <!-- KISAYOLLAR MODALI -->
@@ -305,11 +352,12 @@
       </div>
       <div class="shortcuts-list">
         <div class="shortcut-row"><kbd>Space</kbd><span data-i18n="scPlay">Sesi Oynat / Duraklat</span></div>
-        <div class="shortcut-row"><kbd>F</kbd><span data-i18n="scMode">Hava / Yangın Modunu Değiştir</span></div>
+        <div class="shortcut-row"><kbd>F</kbd><span data-i18n="scMode">Mod Değiştir (Hava / Yangın / Işık)</span></div>
         <div class="shortcut-row"><kbd>←</kbd> / <kbd>→</kbd><span data-i18n="scStation">Önceki / Sonraki İstasyon</span></div>
         <div class="shortcut-row"><kbd>R</kbd><span data-i18n="scRandom">Rastgele Konum Keşfet</span></div>
         <div class="shortcut-row"><kbd>V</kbd><span data-i18n="scVoice">Sesli Rehberi Aç/Kapat</span></div>
         <div class="shortcut-row"><kbd>M</kbd><span data-i18n="scMute">Sesi Kapat / Aç</span></div>
+        <div class="shortcut-row"><kbd>H</kbd><span data-i18n="scTour">İnteraktif Rehberi Başlat</span></div>
       </div>
     </div>
   </div>
